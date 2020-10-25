@@ -1,0 +1,71 @@
+name: CI
+
+on:
+  push:
+    branches: [master]
+  pull_request:
+
+jobs:
+  build-and-test:
+    name: Build crate and run tests
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v2
+
+      - name: Cache cargo registry
+        uses: actions/cache@v1
+        with:
+          path: ~/.cargo/registry
+          key: ${{ runner.os }}-cargo-registry-${{ hashFiles('**/Cargo.lock') }}
+          restore-keys: |
+            ${{ runner.os }}-cargo-registry-
+
+      - name: Cache cargo build
+        uses: actions/cache@v1
+        with:
+          path: target
+          key: ${{ runner.os }}-cargo-build-${{ hashFiles('**/Cargo.lock') }}
+          restore-keys: |
+            ${{ runner.os }}-cargo-build-
+
+      - name: Build
+        run: cargo build --locked
+
+      - name: Run unit tests
+        run: cargo test
+
+  lint:
+    name: Run linter
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v2
+
+      - name: Install clippy
+        run: rustup component add clippy
+
+      - name: Run clippy
+        run: cargo clippy --all-targets --all-features -- -D warnings
+
+  format:
+    name: Run formatter
+    runs-on: ubuntu-latest
+
+    steps:
+      - uses: actions/checkout@v1
+      - run: rustup component add rustfmt
+      - run: cargo fmt --all -- --check
+
+  block-autosquash-commits:
+    name: Block autosquash commits
+    runs-on: ubuntu-latest
+    if: github.ref != 'refs/heads/master'
+
+    steps:
+      - name: Block autosquash commits
+        uses: xt0rted/block-autosquash-commits-action@v2.0.0
+        with:
+          repo-token: ${{ secrets.GITHUB_TOKEN }}
