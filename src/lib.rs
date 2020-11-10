@@ -1,3 +1,5 @@
-pub mod nl80211;
+mod attributes;
+mod commands;
+mod netlink;
 
-pub use nl80211::NlSocket;
+pub use netlink::NlSocket;

@@ -6,8 +6,11 @@ use neli::nl::Nlmsghdr;
 use neli::nlattr::{AttrHandle, Nlattr};
 use neli::socket::NlSocket as NeliSocket;
 
+use super::attributes::Attribute;
+use super::commands::Command;
+
 const NL80211_VERSION: u8 = 1;
-type Neli80211Header = Genlmsghdr<super::Command, super::Attribute>;
+type Neli80211Header = Genlmsghdr<Command, Attribute>;
 
 pub struct NlSocket {
     socket: RefCell<NeliSocket>,
@@ -26,7 +29,7 @@ impl NlSocket {
     }
 
     pub fn list_interfaces(&self) -> Vec<WirelessInterface> {
-        let nl_payload = Nl80211HeaderBuilder::new(super::Command::GetInterface);
+        let nl_payload = Nl80211HeaderBuilder::new(Command::GetInterface);
         let msg = NetlinkHeaderBuilder::new(self.nl_type, nl_payload)
             .add_flag(NlmF::Request)
             .add_flag(NlmF::Dump);
@@ -103,19 +106,19 @@ impl Into<Nlmsghdr<u16, Neli80211Header>> for NetlinkHeaderBuilder {
 
 /// Builder for 802.11 netlink header and payload.
 struct Nl80211HeaderBuilder {
-    command: super::Command,
-    attributes: Vec<(super::Attribute, Vec<u8>)>,
+    command: Command,
+    attributes: Vec<(Attribute, Vec<u8>)>,
 }
 
 impl Nl80211HeaderBuilder {
-    fn new(command: super::Command) -> Self {
+    fn new(command: Command) -> Self {
         Self {
             command,
             attributes: Vec::new(),
         }
     }
 
-    fn add_attribute(self, nla_type: super::Attribute, payload: Vec<u8>) -> Self {
+    fn add_attribute(self, nla_type: Attribute, payload: Vec<u8>) -> Self {
         let mut attributes = self.attributes.clone();
         attributes.push((nla_type, payload));
         Self {
@@ -143,15 +146,15 @@ pub struct WirelessInterface {
 }
 
 trait Parser {
-    fn parse(handle: AttrHandle<super::Attribute>) -> Self;
+    fn parse(handle: AttrHandle<Attribute>) -> Self;
 }
 
 impl Parser for WirelessInterface {
-    fn parse(handle: AttrHandle<super::Attribute>) -> Self {
+    fn parse(handle: AttrHandle<Attribute>) -> Self {
         let mut interface = WirelessInterface::default();
         for attr in handle.iter() {
             match attr.nla_type {
-                super::Attribute::Ssid => {
+                Attribute::Ssid => {
                     interface.essid = Some(String::from_utf8_lossy(&attr.payload).to_string());
                 }
                 _ => (),
