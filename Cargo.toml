@@ -1,7 +1,10 @@
 [package]
 name = "netlink_wi"
 version = "0.1.0"
-authors = ["Olli Paakkunainen <olli@paakkunainen.fi>"]
+authors = [
+    "Olli Paakkunainen <olli@paakkunainen.fi>",
+    "Adarsh Krishnan <adarshk7@gmail.com>",
+]
 edition = "2018"
 description = """
 A library and command-line utility to retrieve information about wireless interfaces
@@ -19,10 +22,6 @@ exclude = [".github/*"]
 [lib]
 name = "netlink_wi"
 path = "src/lib.rs"
-
-[[bin]]
-name = "netlink_wi_cmd"
-path = "src/cmd/main.rs"
 
 [dependencies]
 neli = "0.4.4"
