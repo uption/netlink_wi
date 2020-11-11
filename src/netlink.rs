@@ -1,4 +1,5 @@
 use std::cell::RefCell;
+use std::convert::TryInto;
 
 use neli::consts::{NlFamily, NlmF, Nlmsg};
 use neli::genl::Genlmsghdr;
@@ -8,6 +9,7 @@ use neli::socket::NlSocket as NeliSocket;
 
 use super::attributes::Attribute;
 use super::commands::Command;
+use super::mac::MacAddress;
 
 const NL80211_VERSION: u8 = 1;
 type Neli80211Header = Genlmsghdr<Command, Attribute>;
@@ -142,7 +144,27 @@ impl Into<Neli80211Header> for Nl80211HeaderBuilder {
 #[derive(Debug, Clone, Default)]
 /// Interface information returned from netlink.
 pub struct WirelessInterface {
+    pub index: u32,
+    pub name: String,
     pub essid: Option<String>,
+    pub mac: Option<MacAddress>,
+    // - ip_addr ???
+    // - def_gw ???
+    // - Signal strength average
+    // - beacon_loss
+    // - Station bssid
+    // - bssid
+    // - connected_time
+    // - rx_bitrate
+    // - rx_packets
+    // - signal
+
+    // - tx_bitrate
+    // - tx_failed
+    // - tx_packets
+    // - tx_retries
+    // - tx_mcs
+    // - rx_mcs
 }
 
 trait Parser {
@@ -154,8 +176,21 @@ impl Parser for WirelessInterface {
         let mut interface = WirelessInterface::default();
         for attr in handle.iter() {
             match attr.nla_type {
+                Attribute::Ifindex => {
+                    let slice: &[u8] = &attr.payload;
+                    interface.index = u32::from_le_bytes(slice.try_into().unwrap());
+                }
+                Attribute::Ifname => {
+                    interface.name = String::from_utf8_lossy(&attr.payload)
+                        .trim_matches('\0')
+                        .to_string();
+                }
                 Attribute::Ssid => {
                     interface.essid = Some(String::from_utf8_lossy(&attr.payload).to_string());
+                }
+                Attribute::Mac => {
+                    let slice: &[u8] = &attr.payload;
+                    interface.mac = Some(slice.try_into().unwrap());
                 }
                 _ => (),
             }
@@ -163,3 +198,10 @@ impl Parser for WirelessInterface {
         interface
     }
 }
+
+// pub fn parse_u8(input: &Vec<u8>) -> u8 {
+//     let to_array =
+//         |slice: &[u8]| -> [u8; 1] { slice.try_into().expect("slice with incorrect length") };
+
+//     u8::from_le_bytes(to_array(input))
+// }

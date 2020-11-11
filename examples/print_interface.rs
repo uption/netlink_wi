@@ -3,5 +3,8 @@ use netlink_wi::NlSocket;
 fn main() {
     let socket = NlSocket::connect();
     let interfaces = socket.list_interfaces();
-    println!("{:?}", interfaces);
+    for interface in interfaces {
+        println!("{:?}", interface);
+        println!("{}", interface.mac.unwrap());
+    }
 }
