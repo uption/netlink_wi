@@ -4,7 +4,7 @@ use neli::{impl_var, impl_var_base, impl_var_trait};
 impl_var_trait!(
     /// Supported nl80211 commands.
     ///
-    /// nl80211_commands enum from https://github.com/torvalds/linux/blob/master/include/uapi/linux/nl80211.h.
+    /// nl80211_commands enum from https://github.com/torvalds/linux/blob/master/include/uapi/linux/nl80211.h
     Command, u8, Cmd,
 
     Unspec => 0,

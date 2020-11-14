@@ -11,14 +11,4 @@ in Linux operating system using netlink protocol.
 - Implement more flexible API
 
 ### Data
-- frequency
-- center_frequency1
-- center_frequency2
-- channel_width
-- pub power
-
-- tx_mcs
-- rx_mcs
-- ip_addr
-- def_gw
-
+- channel

@@ -6,5 +6,6 @@ fn main() {
     for interface in interfaces {
         println!("{:?}", interface);
         println!("{}", interface.mac.unwrap());
+        println!("{}", interface.channel_width.unwrap());
     }
 }

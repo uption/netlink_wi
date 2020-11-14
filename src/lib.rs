@@ -1,6 +1,6 @@
 mod attributes;
 mod commands;
-mod mac;
+mod interface;
 mod netlink;
 
 pub use netlink::NlSocket;

@@ -4,7 +4,7 @@ use neli::{impl_var, impl_var_base, impl_var_trait};
 impl_var_trait!(
     /// Nl80211 netlink attributes.
     ///
-    /// nl80211_attrs enum from https://github.com/torvalds/linux/blob/master/include/uapi/linux/nl80211.h.
+    /// nl80211_attrs enum from https://github.com/torvalds/linux/blob/master/include/uapi/linux/nl80211.h
     Attribute, u16, NlAttrType,
     Unspec                       => 0,
 
