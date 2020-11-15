@@ -1,6 +1,8 @@
 use std::cell::RefCell;
+use std::convert::TryInto;
 
 use neli::consts::{NlFamily, NlmF, Nlmsg};
+use neli::err::NlError;
 use neli::genl::Genlmsghdr;
 use neli::nl::Nlmsghdr;
 use neli::nlattr::{AttrHandle, Nlattr};
@@ -8,6 +10,7 @@ use neli::socket::NlSocket as NeliSocket;
 
 use super::attributes::Attribute;
 use super::commands::Command;
+use super::error::AttrParseError;
 use super::interface::WirelessInterface;
 
 const NL80211_VERSION: u8 = 1;
@@ -20,32 +23,34 @@ pub struct NlSocket {
 
 impl NlSocket {
     /// Connect netlink socket.
-    pub fn connect() -> Self {
-        let mut socket = NeliSocket::connect(NlFamily::Generic, None, None, true).unwrap();
-        let nl_type = socket.resolve_genl_family("nl80211").unwrap();
-        Self {
+    pub fn connect() -> Result<Self, NlError> {
+        let mut socket = NeliSocket::connect(NlFamily::Generic, None, None, true)?;
+        let nl_type = socket.resolve_genl_family("nl80211")?;
+        Ok(Self {
             socket: RefCell::new(socket),
             nl_type,
-        }
+        })
     }
 
-    pub fn list_interfaces(&self) -> Vec<WirelessInterface> {
+    pub fn list_interfaces(
+        &self,
+    ) -> Result<Vec<Result<WirelessInterface, AttrParseError>>, NlError> {
         let nl_payload = Nl80211HeaderBuilder::new(Command::GetInterface);
         let msg = NetlinkHeaderBuilder::new(self.nl_type, nl_payload)
             .add_flag(NlmF::Request)
             .add_flag(NlmF::Dump);
-        self.send(msg);
+        self.send(msg)?;
         self.read::<WirelessInterface>()
     }
 
-    fn send(&self, payload: NetlinkHeaderBuilder) {
-        self.socket.borrow_mut().send_nl(payload.into()).unwrap();
+    fn send(&self, payload: NetlinkHeaderBuilder) -> Result<(), NlError> {
+        self.socket.borrow_mut().send_nl(payload.into())
     }
 
-    fn read<T: Parser>(&self) -> Vec<T> {
+    fn read<T: Parser>(&self) -> Result<Vec<Result<T, AttrParseError>>, NlError> {
         let mut responses = Vec::new();
         for response in self.socket.borrow_mut().iter::<Nlmsg, Neli80211Header>() {
-            let response = response.unwrap();
+            let response = response?;
             match response.nl_type {
                 Nlmsg::Noop => (),
                 Nlmsg::Overrun => (),
@@ -61,7 +66,7 @@ impl NlSocket {
                 Nlmsg::UnrecognizedVariant(nl_type) => println!("Unrecognized nl_type {}", nl_type),
             };
         }
-        responses
+        Ok(responses)
     }
 }
 
@@ -134,12 +139,33 @@ impl Into<Neli80211Header> for Nl80211HeaderBuilder {
         let attrs = self
             .attributes
             .into_iter()
-            .map(|(nla_type, payload)| Nlattr::new(None, nla_type, payload).unwrap())
+            .map(|(nla_type, payload)| {
+                Nlattr::new(None, nla_type, payload).expect("Failed to serialize Nlattr")
+            })
             .collect();
-        Genlmsghdr::new(self.command, NL80211_VERSION, attrs).unwrap()
+        Genlmsghdr::new(self.command, NL80211_VERSION, attrs)
+            .expect("Failed to create generic netlink header and payload")
     }
 }
 
 pub(crate) trait Parser {
-    fn parse(handle: AttrHandle<Attribute>) -> Self;
+    fn parse(handle: AttrHandle<Attribute>) -> Result<Self, AttrParseError>
+    where
+        Self: Sized;
+}
+
+pub(crate) trait PayloadParser {
+    fn parse(payload: &Nlattr<Attribute, Vec<u8>>) -> Result<Self, AttrParseError>
+    where
+        Self: Sized;
+}
+
+impl PayloadParser for u32 {
+    fn parse(attr: &Nlattr<Attribute, Vec<u8>>) -> Result<Self, AttrParseError> {
+        let payload: &[u8] = &attr.payload;
+        let payload = payload
+            .try_into()
+            .map_err(|e| AttrParseError::new(e, attr.nla_type.clone()))?;
+        Ok(u32::from_le_bytes(payload))
+    }
 }

@@ -1,11 +1,10 @@
 use netlink_wi::NlSocket;
 
 fn main() {
-    let socket = NlSocket::connect();
-    let interfaces = socket.list_interfaces();
+    let socket = NlSocket::connect().unwrap();
+    let interfaces = socket.list_interfaces().unwrap();
     for interface in interfaces {
+        let interface = interface.unwrap();
         println!("{:?}", interface);
-        println!("{}", interface.mac.unwrap());
-        println!("{}", interface.channel_width.unwrap());
     }
 }

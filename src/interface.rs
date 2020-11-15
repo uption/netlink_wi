@@ -1,11 +1,13 @@
-use std::convert::TryFrom;
 use std::convert::TryInto;
 use std::fmt;
 
 use neli::nlattr::AttrHandle;
+use neli::nlattr::Nlattr;
 
 use super::attributes::Attribute;
+use super::error::AttrParseError;
 use super::netlink::Parser;
+use super::netlink::PayloadParser;
 
 #[derive(Debug, Clone, Default)]
 /// Interface information returned from netlink.
@@ -31,13 +33,12 @@ pub struct WirelessInterface {
 }
 
 impl Parser for WirelessInterface {
-    fn parse(handle: AttrHandle<Attribute>) -> Self {
+    fn parse(handle: AttrHandle<Attribute>) -> Result<Self, AttrParseError> {
         let mut interface = WirelessInterface::default();
         for attr in handle.iter() {
             match attr.nla_type {
                 Attribute::Ifindex => {
-                    let slice: &[u8] = &attr.payload;
-                    interface.index = u32::from_le_bytes(slice.try_into().unwrap());
+                    interface.index = u32::parse(&attr)?;
                 }
                 Attribute::Ifname => {
                     interface.name = String::from_utf8_lossy(&attr.payload)
@@ -47,37 +48,27 @@ impl Parser for WirelessInterface {
                 Attribute::Ssid => {
                     interface.ssid = Some(String::from_utf8_lossy(&attr.payload).to_string());
                 }
-                Attribute::Mac => {
-                    let slice: &[u8] = &attr.payload;
-                    interface.mac = Some(slice.try_into().unwrap());
-                }
+                Attribute::Mac => interface.mac = Some(MacAddress::parse(&attr)?),
                 Attribute::WiphyFreq => {
-                    let slice: &[u8] = &attr.payload;
-                    interface.frequency = Some(u32::from_le_bytes(slice.try_into().unwrap()));
+                    interface.frequency = Some(u32::parse(&attr)?);
                 }
                 Attribute::CenterFreq1 => {
-                    let slice: &[u8] = &attr.payload;
-                    interface.center_frequency1 =
-                        Some(u32::from_le_bytes(slice.try_into().unwrap()));
+                    interface.center_frequency1 = Some(u32::parse(&attr)?);
                 }
                 Attribute::CenterFreq2 => {
-                    let slice: &[u8] = &attr.payload;
-                    interface.center_frequency2 =
-                        Some(u32::from_le_bytes(slice.try_into().unwrap()));
+                    interface.center_frequency2 = Some(u32::parse(&attr)?);
                 }
                 Attribute::ChannelWidth => {
-                    let slice: &[u8] = &attr.payload;
-                    let attr_channel_width = u32::from_le_bytes(slice.try_into().unwrap());
+                    let attr_channel_width = u32::parse(&attr)?;
                     interface.channel_width = Some(attr_channel_width.into());
                 }
                 Attribute::WiphyTxPowerLevel => {
-                    let slice: &[u8] = &attr.payload;
-                    interface.tx_power = Some(u32::from_le_bytes(slice.try_into().unwrap()));
+                    interface.tx_power = Some(u32::parse(&attr)?);
                 }
                 _ => (),
             }
         }
-        interface
+        Ok(interface)
     }
 }
 
@@ -104,11 +95,14 @@ impl fmt::Display for MacAddress {
     }
 }
 
-impl TryFrom<&[u8]> for MacAddress {
-    type Error = std::array::TryFromSliceError;
-    fn try_from(slice: &[u8]) -> Result<Self, Self::Error> {
+impl PayloadParser for MacAddress {
+    fn parse(attr: &Nlattr<Attribute, Vec<u8>>) -> Result<Self, AttrParseError> {
+        let payload: &[u8] = &attr.payload;
+        let payload = payload
+            .try_into()
+            .map_err(|e| AttrParseError::new(e, attr.nla_type.clone()))?;
         Ok(MacAddress {
-            address_bytes: slice.try_into()?,
+            address_bytes: payload,
         })
     }
 }
