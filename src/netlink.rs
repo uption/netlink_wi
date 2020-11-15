@@ -47,7 +47,7 @@ impl NlSocket {
         self.socket.borrow_mut().send_nl(payload.into())
     }
 
-    fn read<T: Parser>(&self) -> Result<Vec<Result<T, AttrParseError>>, NlError> {
+    fn read<T: AttributeParser>(&self) -> Result<Vec<Result<T, AttrParseError>>, NlError> {
         let mut responses = Vec::new();
         for response in self.socket.borrow_mut().iter::<Nlmsg, Neli80211Header>() {
             let response = response?;
@@ -148,7 +148,7 @@ impl Into<Neli80211Header> for Nl80211HeaderBuilder {
     }
 }
 
-pub(crate) trait Parser {
+pub(crate) trait AttributeParser {
     fn parse(handle: AttrHandle<Attribute>) -> Result<Self, AttrParseError>
     where
         Self: Sized;

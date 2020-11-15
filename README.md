@@ -8,6 +8,7 @@ in Linux operating system using netlink protocol.
 - Unit tests
 - Documentation for the public API
 - Implement more flexible API
+- Get station information
 
 ### Data
 - channel

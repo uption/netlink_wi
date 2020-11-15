@@ -6,7 +6,7 @@ use neli::nlattr::Nlattr;
 
 use super::attributes::Attribute;
 use super::error::AttrParseError;
-use super::netlink::Parser;
+use super::netlink::AttributeParser;
 use super::netlink::PayloadParser;
 
 #[derive(Debug, Clone, Default)]
@@ -32,7 +32,7 @@ pub struct WirelessInterface {
     pub tx_power: Option<u32>,
 }
 
-impl Parser for WirelessInterface {
+impl AttributeParser for WirelessInterface {
     fn parse(handle: AttrHandle<Attribute>) -> Result<Self, AttrParseError> {
         let mut interface = WirelessInterface::default();
         for attr in handle.iter() {
