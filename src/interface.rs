@@ -78,7 +78,7 @@ pub struct MacAddress {
 }
 
 impl MacAddress {
-    fn as_bytes(&self) -> [u8; 6] {
+    pub fn as_bytes(&self) -> [u8; 6] {
         self.address_bytes
     }
 }

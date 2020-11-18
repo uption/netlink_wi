@@ -124,6 +124,7 @@ impl Nl80211HeaderBuilder {
         }
     }
 
+    #[allow(dead_code)]
     fn add_attribute(self, nla_type: Attribute, payload: Vec<u8>) -> Self {
         let mut attributes = self.attributes.clone();
         attributes.push((nla_type, payload));
