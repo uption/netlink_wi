@@ -85,13 +85,13 @@ impl MacAddress {
 
 impl fmt::Display for MacAddress {
     fn fmt(&self, f: &mut fmt::Formatter<'_>) -> fmt::Result {
-        let foo: Vec<String> = self
+        let hex: Vec<String> = self
             .address_bytes
             .iter()
             .map(|x| format!("{:X?}", x))
             .collect();
-        let foo = foo.join(":");
-        write!(f, "{}", foo)
+        let hex = hex.join(":");
+        write!(f, "{}", hex)
     }
 }
 
