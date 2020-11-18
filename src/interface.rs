@@ -146,6 +146,27 @@ impl From<u32> for ChannelWidth {
     }
 }
 
+impl From<ChannelWidth> for u32 {
+    fn from(attr_channel_width: ChannelWidth) -> Self {
+        match attr_channel_width {
+            ChannelWidth::Width20NoHT => 20,
+            ChannelWidth::Width20 => 20,
+            ChannelWidth::Width40 => 40,
+            ChannelWidth::Width80 => 80,
+            ChannelWidth::Width80P80 => 80,
+            ChannelWidth::Width160 => 160,
+            ChannelWidth::Width5 => 5,
+            ChannelWidth::Width10 => 10,
+            ChannelWidth::Width1 => 1,
+            ChannelWidth::Width2 => 2,
+            ChannelWidth::Width4 => 4,
+            ChannelWidth::Width8 => 8,
+            ChannelWidth::Width16 => 16,
+            ChannelWidth::Unknown => 0,
+        }
+    }
+}
+
 impl fmt::Display for ChannelWidth {
     fn fmt(&self, f: &mut fmt::Formatter<'_>) -> fmt::Result {
         let channel_width = match self {
