@@ -1,6 +1,6 @@
 [package]
 name = "netlink_wi"
-version = "0.1.0"
+version = "0.1.1"
 authors = [
     "Olli Paakkunainen <olli@paakkunainen.fi>",
     "Adarsh Krishnan <adarshk7@gmail.com>",
@@ -14,9 +14,7 @@ categories = ["command-line-utilities"]
 keywords = ["netlink", "linux", "wifi", "nl80211"]
 license = "MIT"
 readme = "README.md"
-documentation = "https://github.com/uption/netlink-wi"
-repository = "https://github.com/uption/netlink-wi"
-homepage = "https://github.com/uption/netlink-wi"
+repository = "https://github.com/uption/netlink_wi"
 exclude = [".github/*"]
 
 [lib]
