@@ -95,7 +95,7 @@ impl fmt::Display for MacAddress {
     }
 }
 
-impl PayloadParser for MacAddress {
+impl PayloadParser<Attribute> for MacAddress {
     fn parse(attr: &Nlattr<Attribute, Vec<u8>>) -> Result<Self, AttrParseError> {
         let payload: &[u8] = &attr.payload;
         let payload = payload

@@ -4,7 +4,8 @@ use neli::{impl_var, impl_var_base, impl_var_trait};
 impl_var_trait!(
     /// Nl80211 netlink attributes.
     ///
-    /// nl80211_attrs enum from https://github.com/torvalds/linux/blob/master/include/uapi/linux/nl80211.h
+    /// nl80211_attrs enum from:
+    /// https://github.com/torvalds/linux/blob/master/include/uapi/linux/nl80211.h
     Attribute, u16, NlAttrType,
     Unspec                       => 0,
 
@@ -33,6 +34,8 @@ impl_var_trait!(
     StaListenInterval            => 18,
     StaSupportedRates            => 19,
     StaVlan                      => 20,
+    // Information about a station, part of station info given for `Command.GetStation`.
+    // Contains a nested attribute. See `StationInfo` enum.
     StaInfo                      => 21,
 
     WiphyBands                   => 22,
@@ -484,4 +487,106 @@ impl_var_trait!(
 
     S1gCapability                => 296,
     S1gCapabilityMask            => 297
+);
+
+impl_var_trait!(
+    /// Nl80211 netlink station information attributes.
+    ///
+    /// These attribute types are used with `Attribute.StaInfo`
+    /// when getting information about a station.
+    ///
+    /// nl80211_sta_info enum from:
+    /// https://github.com/torvalds/linux/blob/master/include/uapi/linux/nl80211.h
+    StationInfo, u16, NlAttrType,
+    // Attribute number 0 is reserved.
+    Invalid            => 0,
+    // Time since last activity.
+    InactiveTime       => 1,
+    // Total received bytes (MPDU length) (u32, from this station).
+    RxBytes            => 2,
+    // Total transmitted bytes (MPDU length) (u32, to this station).
+    TxBytes            => 3,
+    // The station's mesh LLID.
+    Llid               => 4,
+    // The station's mesh PLID.
+    Plid               => 5,
+    // Peer link state for the station (nested attribute).
+    PlinkState         => 6,
+    // Signal strength of last received PPDU (u8, dBm).
+    Signal             => 7,
+    // Current unicast tx rate (nested attribute).
+    TxBitrate          => 8,
+    // Total received packet (MSDUs and MMPDUs) (u32, from this station)
+    RxPackets          => 9,
+    // Total transmitted packets (MSDUs and MMPDUs) (u32, to this station)
+    TxPackets          => 10,
+    // Total retries (MPDUs) (u32, to this station).
+    TxRetries          => 11,
+    // Total failed packets (MPDUs) (u32, to this station).
+    TxFailed           => 12,
+    // Signal strength average (u8, dBm).
+    SignalAvg          => 13,
+    // Last unicast data frame rx rate (nested attribute).
+    RxBitrate          => 14,
+    // Current station's view of BSS (nested attribute).
+    BssParam           => 15,
+    // Time since the station is last connected.
+    ConnectedTime      => 16,
+    // Contains a struct nl80211_sta_flag_update.
+    StaFlags           => 17,
+    // Count of times beacon loss was detected (u32).
+    BeaconLoss         => 18,
+    // Timing offset with respect to this STA (s64).
+    TOffset            => 19,
+    // Local mesh STA link-specific power mode.
+    LocalPm            => 20,
+    // Peer mesh STA link-specific power mode.
+    PeerPm             => 21,
+    // Neighbor mesh STA power save mode towards non-peer STA.
+    NonpeerPm          => 22,
+    // Total received bytes (MPDU length) (u64, from this station).
+    RxBytes64          => 23,
+    // Total transmitted bytes (MPDU length) (u64, to this station).
+    TxBytes64          => 24,
+    // Per-chain signal strength of last PPDU. Contains a nested array of signal
+    // strength attributes (u8, dBm).
+    ChainSignal        => 25,
+    // Per-chain signal strength average. Same format as `ChainSignal`.
+    ChainSignalAvg     => 26,
+    // Expected throughput considering also the 802.11 header (u32, kbps).
+    ExpectedThroughput => 27,
+    // RX packets dropped for unspecified reasons (u64).
+    RxDropMisc         => 28,
+    // Number of beacons received from this peer (u64).
+    BeaconRx           => 29,
+    // Signal strength average for beacons only (u8, dBm).
+    BeaconSignalAvg    => 30,
+    // Per-TID statistics (nested attribute).
+    TidStats           => 31,
+    // Aggregate PPDU duration for all frames received from the station (u64, usec).
+    RxDuration         => 32,
+    // Attribute used for padding for 64-bit alignment.
+    Pad                => 33,
+    // Signal strength of the last ACK frame (u8, dBm).
+    AckSignal          => 34,
+    // Average signal strength of ACK frames (s8, dBm).
+    AckSignalAvg       => 35,
+    // Total number of received packets (MPDUs) (u32, from this station).
+    RxMpdus            => 36,
+    // Total number of packets (MPDUs) received with an FCS error (u32, from this station).
+    // This count may not include some packets with an FCS error due to TA corruption.
+    // Hence this counter might not be fully accurate.
+    FcsErrorCount      => 37,
+    // Set to true if STA has a path to a mesh gate (u8, 0 or 1).
+    ConnectedToGate    => 38,
+    // Aggregate PPDU duration for all frames sent to the station (u64, usec).
+    TxDuration         => 39,
+    // Current airtime weight for station (u16).
+    AirtimeWeight      => 40,
+    // Airtime link metric for mesh station.
+    AirtimeLinkMetric  => 41,
+    // Timestamp (CLOCK_BOOTTIME, nanoseconds) of STA's association.
+    AssocAtBootTime    => 42,
+    // Set to true if STA has a path to an authentication server (u8, 0 or 1).
+    ConnectedToAs      => 43
 );

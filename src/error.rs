@@ -2,26 +2,24 @@
 use std::error;
 use std::fmt;
 
-use super::attributes::Attribute;
-
 #[derive(Debug)]
 pub struct AttrParseError {
     msg: String,
-    attr: Attribute,
+    attr: String,
 }
 
 impl AttrParseError {
-    pub fn new(msg: impl fmt::Display, attr: Attribute) -> Self {
+    pub fn new(msg: impl fmt::Display, attr: impl fmt::Debug) -> Self {
         Self {
             msg: format!("{}", msg),
-            attr,
+            attr: format!("{:?}", attr),
         }
     }
 }
 
 impl fmt::Display for AttrParseError {
     fn fmt(&self, f: &mut fmt::Formatter<'_>) -> fmt::Result {
-        write!(f, "Failed to parse attribute {:?}: {}", self.attr, self.msg)
+        write!(f, "Failed to parse attribute {}: {}", self.attr, self.msg)
     }
 }
 
@@ -31,6 +29,7 @@ impl error::Error for AttrParseError {}
 mod tests {
 
     use super::*;
+    use crate::attributes::Attribute;
     #[test]
     fn display_error() {
         let err = AttrParseError::new("test", Attribute::WiphyName);

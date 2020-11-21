@@ -1,5 +1,6 @@
 use std::cell::RefCell;
 use std::convert::TryInto;
+use std::fmt;
 
 use neli::consts::{NlFamily, NlmF, Nlmsg};
 use neli::err::NlError;
@@ -12,6 +13,7 @@ use super::attributes::Attribute;
 use super::commands::Command;
 use super::error::AttrParseError;
 use super::interface::WirelessInterface;
+use super::station::Station;
 
 const NL80211_VERSION: u8 = 1;
 type Neli80211Header = Genlmsghdr<Command, Attribute>;
@@ -41,6 +43,19 @@ impl NlSocket {
             .add_flag(NlmF::Dump);
         self.send(msg)?;
         self.read::<WirelessInterface>()
+    }
+
+    pub fn list_stations(
+        &self,
+        if_index: u32,
+    ) -> Result<Vec<Result<Station, AttrParseError>>, NlError> {
+        let nl_payload = Nl80211HeaderBuilder::new(Command::GetStation)
+            .add_attribute(Attribute::Ifindex, if_index.to_le_bytes().to_vec());
+        let msg = NetlinkHeaderBuilder::new(self.nl_type, nl_payload)
+            .add_flag(NlmF::Request)
+            .add_flag(NlmF::Dump);
+        self.send(msg)?;
+        self.read::<Station>()
     }
 
     fn send(&self, payload: NetlinkHeaderBuilder) -> Result<(), NlError> {
@@ -155,18 +170,27 @@ pub(crate) trait AttributeParser {
         Self: Sized;
 }
 
-pub(crate) trait PayloadParser {
-    fn parse(payload: &Nlattr<Attribute, Vec<u8>>) -> Result<Self, AttrParseError>
+pub(crate) trait PayloadParser<T> {
+    fn parse(payload: &Nlattr<T, Vec<u8>>) -> Result<Self, AttrParseError>
     where
+        T: Clone + fmt::Debug,
         Self: Sized;
 }
 
-impl PayloadParser for u32 {
-    fn parse(attr: &Nlattr<Attribute, Vec<u8>>) -> Result<Self, AttrParseError> {
-        let payload: &[u8] = &attr.payload;
-        let payload = payload
-            .try_into()
-            .map_err(|e| AttrParseError::new(e, attr.nla_type.clone()))?;
+impl<T: Clone + fmt::Debug> PayloadParser<T> for u8 {
+    fn parse(attr: &Nlattr<T, Vec<u8>>) -> Result<Self, AttrParseError> {
+        let payload: [u8; 1] = attr.payload.clone().try_into().map_err(|_| {
+            AttrParseError::new(format!("Wrong length for u8"), attr.nla_type.clone())
+        })?;
+        Ok(u8::from_le_bytes(payload))
+    }
+}
+
+impl<T: Clone + fmt::Debug> PayloadParser<T> for u32 {
+    fn parse(attr: &Nlattr<T, Vec<u8>>) -> Result<Self, AttrParseError> {
+        let payload: [u8; 4] = attr.payload.clone().try_into().map_err(|_| {
+            AttrParseError::new(format!("Wrong length for u32"), attr.nla_type.clone())
+        })?;
         Ok(u32::from_le_bytes(payload))
     }
 }
