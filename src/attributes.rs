@@ -357,7 +357,7 @@ impl_var_trait!(
     PlinkState         => 6,
     // Signal strength of last received PPDU (u8, dBm).
     Signal             => 7,
-    // Current unicast tx rate (nested attribute).
+    // Current unicast tx rate (nested attribute, see enum `RateInfo`).
     TxBitrate          => 8,
     // Total received packet (MSDUs and MMPDUs) (u32, from this station)
     RxPackets          => 9,
@@ -369,7 +369,7 @@ impl_var_trait!(
     TxFailed           => 12,
     // Signal strength average (u8, dBm).
     SignalAvg          => 13,
-    // Last unicast data frame rx rate (nested attribute).
+    // Last unicast data frame rx rate (nested attribute, see enum `RateInfo`).
     RxBitrate          => 14,
     // Current station's view of BSS (nested attribute).
     BssParam           => 15,
@@ -432,4 +432,94 @@ impl_var_trait!(
     AssocAtBootTime    => 42,
     // Set to true if STA has a path to an authentication server (u8, 0 or 1).
     ConnectedToAs      => 43
+);
+
+impl_var_trait!(
+    /// Nl80211 bitrate information.
+    ///
+    /// These attribute types are used with `Attribute.StaInfo.RxBitrate` or
+    /// `Attribute.StaInfo.TxBitrate` when getting information about a station.
+    ///
+    /// nl80211_rate_info enum from:
+    /// https://github.com/torvalds/linux/blob/master/include/uapi/linux/nl80211.h
+    RateInfo, u16, NlAttrType,
+    // Attribute number 0 is reserved.
+    Invalid             => 0,
+    // Total bitrate (u16, 100kbit/s).
+    Bitrate             => 1,
+    // MCS index for 802.11n (u8).
+    Mcs                 => 2,
+    // 40 MHz dualchannel bitrate.
+    MhzWidth40          => 3,
+    // 400ns guard interval.
+    ShortGuardInterval  => 4,
+    // Total bitrate (u32, 100kbit/s).
+    Bitrate32           => 5,
+    // MCS index for VHT (u8).
+    VhtMcs              => 6,
+    // Number of streams in VHT (u8)
+    VhtNss              => 7,
+    // 80 MHz VHT rate.
+    MhzWidth80          => 8,
+    // Unused. 80+80 is treated the same as 160 for purposes of the bitrates.
+    MhzWidth80p80       => 9,
+    // 160 MHz VHT rate.
+    MhzWidth160         => 10,
+    // 10 MHz width. Note that this is a legacy rate and will be reported as the
+    // actual bitrate, i.e. half the base (20 MHz) rate.
+    MhzWidth10          => 11,
+    // 5 MHz width. Note that this is a legacy rate and will be reported as the
+    // actual bitrate, i.e. half the base (20 MHz) rate.
+    MhzWidth5           => 12,
+    // HE MCS index (u8, 0-11).
+    HeMcs               => 13,
+    // HE NSS value (u8, 1-8).
+    HeNss               => 14,
+    // HE guard interval identifier (u8, see enum `HeGuardInterval`).
+    HeGuardInterval     => 15,
+    // HE DCM value (u8, 0/1).
+    HeDcm               => 16,
+    // HE RU allocation, if not present then non-OFDMA was used
+    // (u8, see enum `HeRuAlloc`).
+    HeRuAlloc           => 17
+);
+
+impl_var_trait!(
+    /// Nl80211 HE guard interval.
+    ///
+    /// These attribute types are used with `RateInfo.HeGuardInterval`
+    ///
+    /// nl80211_he_gi enum from:
+    /// https://github.com/torvalds/linux/blob/master/include/uapi/linux/nl80211.h
+    HeGuardInterval, u16, NlAttrType,
+    // 0.8 usec
+    Usec0_8 => 0,
+    // 1.6 usec
+    Usec1_6 => 1,
+    // 3.2 usec
+    Usec3_2 => 2
+);
+
+impl_var_trait!(
+    /// Nl80211 HE RU allocation values.
+    ///
+    /// These attribute types are used with `RateInfo.HeRuAlloc`.
+    ///
+    /// nl80211_he_ru_alloc enum from:
+    /// https://github.com/torvalds/linux/blob/master/include/uapi/linux/nl80211.h
+    HeRuAlloc, u16, NlAttrType,
+    // 26-tone RU allocation.
+    Alloc26     => 0,
+    // 52-tone RU allocation.
+    Alloc52     => 1,
+    // 106-tone RU allocation.
+    Alloc106    => 2,
+    // 242-tone RU allocation.
+    Alloc242    => 3,
+    // 484-tone RU allocation.
+    Alloc484    => 4,
+    // 996-tone RU allocation.
+    Alloc996    => 5,
+    // 2x996-tone RU allocation.
+    Alloc2x996  => 6
 );

@@ -12,45 +12,65 @@ use super::netlink::PayloadParser;
 #[derive(Debug, Clone, Default)]
 /// Interface information returned from netlink.
 pub struct WirelessInterface {
-    // Network interface index.
-    pub index: u32,
-    // Network interface name.
+    /// Index of wiphy to operate on.
+    pub wiphy_index: u32,
+    /// Network interface index.
+    pub interface_index: u32,
+    /// Network interface name.
     pub name: String,
-    // Network SSID.
+    /// Interface MAC address (BSSID).
+    pub mac: MacAddress,
+    /// Used to indicate consistent snapshots for dumps. This number increases
+    /// whenever the object list being dumped changes.
+    pub generation: u32,
+    /// Network SSID.
     pub ssid: Option<String>,
-    // Interface MAC address (BSSID).
-    pub mac: Option<MacAddress>,
-    // Channel frequency in MHz.
+    /// Channel frequency in MHz.
     pub frequency: Option<u32>,
-    // Center frequency of the first part of the channel, used for anything but 20 MHz bandwidth.
+    /// Offset of the frequncy in KHz.
+    pub frequency_offset: Option<u32>,
+    /// Center frequency of the first part of the channel, used for anything but 20 MHz bandwidth.
     pub center_frequency1: Option<u32>,
-    // Center frequency of the second part of the channel, used only for 80+80 MHz bandwidth.
+    /// Center frequency of the second part of the channel, used only for 80+80 MHz bandwidth.
     pub center_frequency2: Option<u32>,
-    // Wireless channel width.
+    /// Wireless channel width.
     pub channel_width: Option<ChannelWidth>,
-    // Transmit power level (s16) in dBm.
+    /// Transmit power level (s16) in dBm.
     pub tx_power: Option<u32>,
+    /// Wireless device identifier, used for pseudo-devices that don't have a netdev.
+    pub wdev: Option<u64>,
+    /// Use 4-address frames on a virtual interface.
+    pub use_4address_frames: Option<bool>,
+    // Iftype
+    // TxqStats
 }
 
 impl AttributeParser for WirelessInterface {
     fn parse(handle: AttrHandle<Attribute>) -> Result<Self, AttrParseError> {
         let mut interface = WirelessInterface::default();
         for attr in handle.iter() {
-            match attr.nla_type {
+            match &attr.nla_type {
+                Attribute::Wiphy => {
+                    interface.wiphy_index = u32::parse(&attr)?;
+                }
                 Attribute::Ifindex => {
-                    interface.index = u32::parse(&attr)?;
+                    interface.interface_index = u32::parse(&attr)?;
                 }
                 Attribute::Ifname => {
                     interface.name = String::from_utf8_lossy(&attr.payload)
                         .trim_matches('\0')
                         .to_string();
                 }
+                Attribute::Mac => interface.mac = MacAddress::parse(&attr)?,
+                Attribute::Generation => interface.generation = u32::parse(&attr)?,
                 Attribute::Ssid => {
                     interface.ssid = Some(String::from_utf8_lossy(&attr.payload).to_string());
                 }
-                Attribute::Mac => interface.mac = Some(MacAddress::parse(&attr)?),
                 Attribute::WiphyFreq => {
                     interface.frequency = Some(u32::parse(&attr)?);
+                }
+                Attribute::WiphyFreqOffset => {
+                    interface.frequency_offset = Some(u32::parse(&attr)?);
                 }
                 Attribute::CenterFreq1 => {
                     interface.center_frequency1 = Some(u32::parse(&attr)?);
@@ -65,7 +85,16 @@ impl AttributeParser for WirelessInterface {
                 Attribute::WiphyTxPowerLevel => {
                     interface.tx_power = Some(u32::parse(&attr)?);
                 }
-                _ => (),
+                Attribute::Wdev => {
+                    interface.wdev = Some(u64::parse(&attr)?);
+                }
+                Attribute::Use4addrFrames => {
+                    interface.use_4address_frames = Some(bool::parse(&attr)?);
+                }
+                unhandled => println!(
+                    "Unhandled wireless interface attribute 'Attribute::{:?}'",
+                    &unhandled
+                ),
             }
         }
         Ok(interface)
@@ -80,6 +109,14 @@ pub struct MacAddress {
 impl MacAddress {
     pub fn as_bytes(&self) -> [u8; 6] {
         self.address_bytes
+    }
+}
+
+impl std::default::Default for MacAddress {
+    fn default() -> Self {
+        MacAddress {
+            address_bytes: [0; 6],
+        }
     }
 }
 

@@ -177,20 +177,64 @@ pub(crate) trait PayloadParser<T> {
         Self: Sized;
 }
 
+impl<T: Clone + fmt::Debug> PayloadParser<T> for bool {
+    fn parse(attr: &Nlattr<T, Vec<u8>>) -> Result<Self, AttrParseError> {
+        let num = u8::parse(&attr)?;
+        match num {
+            0 => Ok(false),
+            1 => Ok(true),
+            _ => Err(AttrParseError::new(
+                format!("Invalid integer value {} for a boolean", attr.payload.len()),
+                attr.nla_type.clone(),
+            )),
+        }
+    }
+}
+
 impl<T: Clone + fmt::Debug> PayloadParser<T> for u8 {
     fn parse(attr: &Nlattr<T, Vec<u8>>) -> Result<Self, AttrParseError> {
         let payload: [u8; 1] = attr.payload.clone().try_into().map_err(|_| {
-            AttrParseError::new(format!("Wrong length for u8"), attr.nla_type.clone())
+            AttrParseError::new(
+                format!("Wrong length ({} bits) for u8", attr.payload.len() * 8),
+                attr.nla_type.clone(),
+            )
         })?;
         Ok(u8::from_le_bytes(payload))
+    }
+}
+
+impl<T: Clone + fmt::Debug> PayloadParser<T> for u16 {
+    fn parse(attr: &Nlattr<T, Vec<u8>>) -> Result<Self, AttrParseError> {
+        let payload: [u8; 2] = attr.payload.clone().try_into().map_err(|_| {
+            AttrParseError::new(
+                format!("Wrong length ({} bits) for u16", attr.payload.len() * 8),
+                attr.nla_type.clone(),
+            )
+        })?;
+        Ok(u16::from_le_bytes(payload))
     }
 }
 
 impl<T: Clone + fmt::Debug> PayloadParser<T> for u32 {
     fn parse(attr: &Nlattr<T, Vec<u8>>) -> Result<Self, AttrParseError> {
         let payload: [u8; 4] = attr.payload.clone().try_into().map_err(|_| {
-            AttrParseError::new(format!("Wrong length for u32"), attr.nla_type.clone())
+            AttrParseError::new(
+                format!("Wrong length ({} bits) for u32", attr.payload.len() * 8),
+                attr.nla_type.clone(),
+            )
         })?;
         Ok(u32::from_le_bytes(payload))
+    }
+}
+
+impl<T: Clone + fmt::Debug> PayloadParser<T> for u64 {
+    fn parse(attr: &Nlattr<T, Vec<u8>>) -> Result<Self, AttrParseError> {
+        let payload: [u8; 8] = attr.payload.clone().try_into().map_err(|_| {
+            AttrParseError::new(
+                format!("Wrong length ({} bits) for u64", attr.payload.len() * 8),
+                attr.nla_type.clone(),
+            )
+        })?;
+        Ok(u64::from_le_bytes(payload))
     }
 }
