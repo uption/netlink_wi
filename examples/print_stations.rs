@@ -8,7 +8,7 @@ fn main() {
         let stations = socket.list_stations(interface.interface_index).unwrap();
         for station in stations {
             let station = station.unwrap();
-            println!("{:?}", station);
+            println!("{:#?}", station);
         }
     }
 }

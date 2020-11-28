@@ -446,7 +446,7 @@ impl_var_trait!(
     SignalAvg          => 13,
     // Last unicast data frame rx rate (nested attribute, see enum `RateInfo`).
     RxBitrate          => 14,
-    // Current station's view of BSS (nested attribute).
+    // Current station's view of BSS (nested attributem see enum `BssParam`).
     BssParam           => 15,
     // Time since the station is last connected.
     ConnectedTime      => 16,
@@ -479,7 +479,11 @@ impl_var_trait!(
     BeaconRx           => 29,
     // Signal strength average for beacons only (u8, dBm).
     BeaconSignalAvg    => 30,
-    // Per-TID statistics (nested attribute).
+    // Per-TID  statistics (nested attribute, see enum `TidStats`).
+    // This is a nested attribute where each the inner attribute number is the
+    // TID+1 and the special TID 16 (i.e. value 17) is used for non-QoS frames;
+    // each one of those is again nested with `TidStats` attributes carrying the
+    // actual values.
     TidStats           => 31,
     // Aggregate PPDU duration for all frames received from the station (u64, usec).
     RxDuration         => 32,
@@ -560,6 +564,28 @@ impl_var_trait!(
 );
 
 impl_var_trait!(
+    /// Nl80211 BSS information collected by STA.
+    ///
+    /// These attribute types are used with `StaInfo.BssParam`.
+    ///
+    /// nl80211_sta_bss_param enum from:
+    /// https://github.com/torvalds/linux/blob/master/include/uapi/linux/nl80211.h
+    BssParam, u16, NlAttrType,
+    // Attribute number 0 is reserved.
+    Invalid =>          0,
+    // Whether CTS protection is enabled (flag).
+    CtsProt =>          1,
+    // Whether short preamble is enabled (flag).
+    ShortPreamble =>    2,
+    // Whether short slot time is enabled (flag).
+    ShortSlotTime =>    3,
+    // DTIM period for beaconing (u8).
+    DtimPeriod =>       4,
+    // Beacon interval (u16).
+    BeaconInterval =>   5
+);
+
+impl_var_trait!(
     /// Nl80211 HE guard interval.
     ///
     /// These attribute types are used with `RateInfo.HeGuardInterval`
@@ -597,4 +623,28 @@ impl_var_trait!(
     Alloc996    => 5,
     // 2x996-tone RU allocation.
     Alloc2x996  => 6
+);
+
+impl_var_trait!(
+    /// Nl80211 per TID (traffic identifier) statistics attributes.
+    ///
+    /// These attributes are used with `StationInfo.TidStats`.
+    ///
+    /// nl80211_tid_stats enum from:
+    /// https://github.com/torvalds/linux/blob/master/include/uapi/linux/nl80211.h
+    TidStats, u16, NlAttrType,
+    // Attribute number 0 is reserved.
+    Invalid =>          0,
+    // Number of MSDUs received (u64).
+    RxMsdu =>           1,
+    // Number of MSDUs transmitted or attempted to transmit (u64).
+    TxMsdu =>           2,
+    // Number of retries for transmitted MSDUs (not counting the first attempt; u64).
+    TxMsduRetries =>    3,
+    // Number of failed transmitted	MSDUs (u64).
+    TxMsduFailed =>     4,
+    // Attribute used for padding for 64-bit alignment.
+    Pad =>              5,
+    // TXQ stats (nested attribute, see enum `TxqStats`).
+    TxqStats =>         6
 );

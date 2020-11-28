@@ -182,11 +182,7 @@ impl<T: Clone + fmt::Debug> PayloadParser<T> for bool {
         let num = u8::parse(&attr)?;
         match num {
             0 => Ok(false),
-            1 => Ok(true),
-            _ => Err(AttrParseError::new(
-                format!("Invalid integer value {} for a boolean", attr.payload.len()),
-                attr.nla_type.clone(),
-            )),
+            _ => Ok(true),
         }
     }
 }
