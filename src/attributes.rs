@@ -16,7 +16,7 @@ impl_var_trait!(
     Ifindex                      => 3,
     // Network interface name.
     Ifname                       => 4,
-    // Type of virtual interface (nested attribute).
+    // Type of virtual interface (nested attribute, see enum `InterfaceType`).
     Iftype                       => 5,
     // MAC address (various uses).
     Mac                          => 6,
@@ -295,7 +295,7 @@ impl_var_trait!(
     Nss                          => 262,
     AckSignal                    => 263,
     ControlPortOverNl80211       => 264,
-    // TXQ statistics (nested attribute).
+    // TXQ statistics (nested attribute, see enum `TxqStats`).
     TxqStats                     => 265,
     TxqLimit                     => 266,
     TxqMemoryLimit               => 267,
@@ -330,6 +330,81 @@ impl_var_trait!(
     UnsolBcastProbeResp          => 295,
     S1gCapability                => 296,
     S1gCapabilityMask            => 297
+);
+
+impl_var!(
+    /// Nl80211 (virtual) interface types.
+    ///
+    /// These attribute types are used with `Attribute.IfType`
+    /// to set the type of an interface.
+    ///
+    /// nl80211_iftype enum from:
+    /// https://github.com/torvalds/linux/blob/master/include/uapi/linux/nl80211.h
+    InterfaceType, u8,
+    // Unspecified type, driver decides.
+    Unspecified =>  0,
+    // Independent BSS member.
+    Adhoc =>        1,
+    // Managed BSS member.
+    Station =>      2,
+    // Access point.
+    Ap =>           3,
+    // VLAN interface for access points; VLAN interfaces are a bit special in
+    // that they must always be tied to a pre-existing AP type interface.
+    ApVlan =>       4,
+    // Wireless distribution interface.
+    Wds =>          5,
+    // Monitor interface receiving all frames.
+    Monitor =>      6,
+    // Mesh point.
+    MeshPoint =>    7,
+    // P2P client.
+    P2pClient =>    8,
+    // P2P group owner.
+    P2pGo =>        9,
+    // P2P device interface type, this is not a netdev and therefore can't be
+    // created in the normal ways, use the use the `Command.StartP2pDevice` and
+    // `Command.StopP2pDevice` commands to create and destroy one.
+    P2pDevice =>    10,
+    // Outside Context of a BSS.
+    Ocb =>          11,
+    // NAN device interface type (not a netdev).
+    Nan =>          12
+);
+
+impl_var_trait!(
+    /// Nl80211 per TXQ (transmit queue) statistics.
+    ///
+    /// These attribute types are used with `Attribute.TxqStats` to get
+    /// transmit queue statistics.
+    ///
+    /// nl80211_txq_stats enum from:
+    /// https://github.com/torvalds/linux/blob/master/include/uapi/linux/nl80211.h
+    TxqStats, u16, NlAttrType,
+    // Attribute number 0 is reserved.
+    Invalid =>          0,
+    // Number of bytes currently backlogged.
+    BacklogBytes =>     1,
+    // Number of packets currently backlogged.
+    BacklogPackets =>   2,
+    // Total number of new flows seen.
+    Flows =>            3,
+    // Total number of packet drops.
+    Drops =>            4,
+    // Total number of packet ECN marks.
+    EcnMarks =>         5,
+    // Number of drops due to queue space overflow.
+    Overlimit =>        6,
+    // Number of drops due to memory limit overflow (only for per-phy stats).
+    Overmemory =>       7,
+    // Number of hash collisions.
+    Collisions =>       8,
+    // Total number of bytes dequeued from TXQ.
+    TxBytes =>          9,
+    // Total number of packets dequeued from TXQ.
+    TxPackets =>        10,
+    // Number of flow buckets for PHY.
+    MaxFlows =>         11
 );
 
 impl_var_trait!(

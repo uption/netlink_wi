@@ -4,7 +4,8 @@ use std::fmt;
 use neli::nlattr::AttrHandle;
 use neli::nlattr::Nlattr;
 
-use super::attributes::Attribute;
+use super::attributes::InterfaceType as NlInterfaceType;
+use super::attributes::{Attribute, TxqStats};
 use super::error::AttrParseError;
 use super::netlink::AttributeParser;
 use super::netlink::PayloadParser;
@@ -41,13 +42,17 @@ pub struct WirelessInterface {
     pub wdev: Option<u64>,
     /// Use 4-address frames on a virtual interface.
     pub use_4address_frames: Option<bool>,
-    // Iftype
-    // TxqStats
+    /// Type of virtual interface.
+    pub interface_type: Option<InterfaceType>,
+    // TXQ statistics.
+    pub txq_statistics: Option<TransmitQueueStats>,
 }
 
 impl AttributeParser for WirelessInterface {
     fn parse(handle: AttrHandle<Attribute>) -> Result<Self, AttrParseError> {
         let mut interface = WirelessInterface::default();
+        let mut interface_type_payload: Option<NlInterfaceType> = None;
+        let mut txq_stats_attr: Option<AttrHandle<'_, TxqStats>> = None;
         for attr in handle.iter() {
             match &attr.nla_type {
                 Attribute::Wiphy => {
@@ -91,14 +96,150 @@ impl AttributeParser for WirelessInterface {
                 Attribute::Use4addrFrames => {
                     interface.use_4address_frames = Some(bool::parse(&attr)?);
                 }
-                unhandled => println!(
-                    "Unhandled wireless interface attribute 'Attribute::{:?}'",
-                    &unhandled
-                ),
+                Attribute::Iftype => {
+                    interface_type_payload = Some(
+                        handle
+                            .get_attr_payload_as::<NlInterfaceType>(Attribute::Iftype)
+                            .map_err(|err| {
+                                AttrParseError::new(err.to_string(), Attribute::Iftype)
+                            })?,
+                    );
+                }
+                Attribute::TxqStats => {
+                    txq_stats_attr = Some(
+                        attr.get_nested_attributes::<TxqStats>()
+                            .map_err(|err| AttrParseError::new(err, Attribute::TxqStats))?,
+                    );
+                }
+                unhandled => {
+                    return Err(AttrParseError::new(
+                        format!("Unhandled wireless interface attribute"),
+                        unhandled,
+                    ));
+                }
             }
+        }
+        if let Some(payload) = interface_type_payload {
+            match &payload {
+                NlInterfaceType::Unspecified => {
+                    interface.interface_type = Some(InterfaceType::Unspecified);
+                }
+                NlInterfaceType::Adhoc => {
+                    interface.interface_type = Some(InterfaceType::Adhoc);
+                }
+                NlInterfaceType::Station => {
+                    interface.interface_type = Some(InterfaceType::Station);
+                }
+                NlInterfaceType::Ap => {
+                    interface.interface_type = Some(InterfaceType::AccessPoint);
+                }
+                NlInterfaceType::ApVlan => {
+                    interface.interface_type = Some(InterfaceType::ApVlan);
+                }
+                NlInterfaceType::Wds => {
+                    interface.interface_type = Some(InterfaceType::Wds);
+                }
+                NlInterfaceType::Monitor => {
+                    interface.interface_type = Some(InterfaceType::Monitor);
+                }
+                NlInterfaceType::MeshPoint => {
+                    interface.interface_type = Some(InterfaceType::MeshPoint);
+                }
+                NlInterfaceType::P2pClient => {
+                    interface.interface_type = Some(InterfaceType::P2pClient);
+                }
+                NlInterfaceType::P2pGo => {
+                    interface.interface_type = Some(InterfaceType::P2pGroupOwner);
+                }
+                NlInterfaceType::P2pDevice => {
+                    interface.interface_type = Some(InterfaceType::P2pDevice);
+                }
+                NlInterfaceType::Ocb => {
+                    interface.interface_type = Some(InterfaceType::Ocb);
+                }
+                NlInterfaceType::Nan => {
+                    interface.interface_type = Some(InterfaceType::NotNetdev);
+                }
+                _ => {
+                    interface.interface_type = Some(InterfaceType::Unknown);
+                }
+            }
+        }
+        if let Some(sub_handle) = txq_stats_attr {
+            let mut txq_statistics = TransmitQueueStats::default();
+            for sub_attr in sub_handle.iter() {
+                match &sub_attr.nla_type {
+                    TxqStats::BacklogBytes => {
+                        txq_statistics.backlog_bytes = Some(u32::parse(&sub_attr)?);
+                    }
+                    TxqStats::BacklogPackets => {
+                        txq_statistics.backlog_packets = Some(u32::parse(&sub_attr)?);
+                    }
+                    TxqStats::Flows => {
+                        txq_statistics.flows = Some(u32::parse(&sub_attr)?);
+                    }
+                    TxqStats::Drops => {
+                        txq_statistics.drops = Some(u32::parse(&sub_attr)?);
+                    }
+                    TxqStats::EcnMarks => {
+                        txq_statistics.ecn_marks = Some(u32::parse(&sub_attr)?);
+                    }
+                    TxqStats::Overlimit => {
+                        txq_statistics.overlimit = Some(u32::parse(&sub_attr)?);
+                    }
+                    TxqStats::Overmemory => {
+                        txq_statistics.overmemory = Some(u32::parse(&sub_attr)?);
+                    }
+                    TxqStats::Collisions => {
+                        txq_statistics.collisions = Some(u32::parse(&sub_attr)?);
+                    }
+                    TxqStats::TxBytes => {
+                        txq_statistics.tx_bytes = Some(u32::parse(&sub_attr)?);
+                    }
+                    TxqStats::TxPackets => {
+                        txq_statistics.tx_packets = Some(u32::parse(&sub_attr)?);
+                    }
+                    TxqStats::MaxFlows => {
+                        txq_statistics.max_flows = Some(u32::parse(&sub_attr)?);
+                    }
+                    unhandled => {
+                        return Err(AttrParseError::new(
+                            format!("Unhandled txq statistics attribute"),
+                            unhandled,
+                        ));
+                    }
+                }
+            }
+            interface.txq_statistics = Some(txq_statistics);
         }
         Ok(interface)
     }
+}
+
+#[derive(Debug, Clone, Default)]
+pub struct TransmitQueueStats {
+    /// Number of bytes currently backlogged.
+    pub backlog_bytes: Option<u32>,
+    /// Number of packets currently backlogged.
+    pub backlog_packets: Option<u32>,
+    /// Total number of new flows seen.
+    pub flows: Option<u32>,
+    /// Total number of packet drops.
+    pub drops: Option<u32>,
+    /// Total number of packet ECN marks.
+    pub ecn_marks: Option<u32>,
+    /// Number of drops due to queue space overflow.
+    pub overlimit: Option<u32>,
+    /// Number of drops due to memory limit overflow (only for per-phy stats).
+    pub overmemory: Option<u32>,
+    /// Number of hash collisions.
+    pub collisions: Option<u32>,
+    /// Total number of bytes dequeued from TXQ.
+    pub tx_bytes: Option<u32>,
+    /// Total number of packets dequeued from TXQ.
+    pub tx_packets: Option<u32>,
+    /// Number of flow buckets for PHY.
+    pub max_flows: Option<u32>,
 }
 
 #[derive(Debug, Copy, Clone)]
@@ -141,6 +282,60 @@ impl PayloadParser<Attribute> for MacAddress {
         Ok(MacAddress {
             address_bytes: payload,
         })
+    }
+}
+
+#[derive(Debug, Copy, Clone)]
+pub enum InterfaceType {
+    /// Unspecified type, driver decides.
+    Unspecified,
+    /// Independent BSS member.
+    Adhoc,
+    /// Managed BSS member.
+    Station,
+    /// Access point.
+    AccessPoint,
+    /// VLAN interface for access points.
+    ApVlan,
+    /// Wireless distribution interface.
+    Wds,
+    /// Monitor interface receiving all frames.
+    Monitor,
+    /// Mesh point.
+    MeshPoint,
+    /// P2P client.
+    P2pClient,
+    /// P2P group owner.
+    P2pGroupOwner,
+    /// P2P device.
+    P2pDevice,
+    /// Outside Context of a BSS.
+    Ocb,
+    /// NAN device interface type (not a netdev).
+    NotNetdev,
+    /// Kernel returned an unknown interface type.
+    Unknown,
+}
+
+impl fmt::Display for InterfaceType {
+    fn fmt(&self, f: &mut fmt::Formatter<'_>) -> fmt::Result {
+        let interface_type = match self {
+            InterfaceType::Unspecified => "Unspecified",
+            InterfaceType::Adhoc => "Adhoc",
+            InterfaceType::Station => "Station",
+            InterfaceType::AccessPoint => "Access point",
+            InterfaceType::ApVlan => "Access point VLAN interface",
+            InterfaceType::Wds => "Wireless distribution interface",
+            InterfaceType::Monitor => "Monitor interface",
+            InterfaceType::MeshPoint => "Mesh point",
+            InterfaceType::P2pClient => "P2P client",
+            InterfaceType::P2pGroupOwner => "P2P group owner",
+            InterfaceType::P2pDevice => "P2P device",
+            InterfaceType::Ocb => "Outside Context of a BSS",
+            InterfaceType::NotNetdev => "Not a netdev",
+            InterfaceType::Unknown => "Unknown interface type",
+        };
+        write!(f, "{}", interface_type)
     }
 }
 
