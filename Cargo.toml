@@ -1,6 +1,6 @@
 [package]
 name = "netlink_wi"
-version = "0.1.2"
+version = "0.2.0"
 authors = [
     "Olli Paakkunainen <olli@paakkunainen.fi>",
     "Adarsh Krishnan <adarshk7@gmail.com>",
@@ -23,4 +23,3 @@ path = "src/lib.rs"
 
 [dependencies]
 neli = "0.4.4"
-buffering = "0.4"
