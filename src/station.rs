@@ -1,9 +1,11 @@
 use neli::nlattr::AttrHandle;
 use std::time::Duration;
 
-use super::attributes::{Attribute, BssParam, StationInfo, TidStats};
+use super::attributes::{
+    Attribute, BssParam, HeGuardInterval, HeRuAlloc, RateInfo as NlRateInfo, StationInfo, TidStats,
+};
 use super::error::AttrParseError;
-use super::interface::{MacAddress, TransmitQueueStats};
+use super::interface::{ChannelWidth, MacAddress, TransmitQueueStats};
 use super::netlink::AttributeParser;
 use super::netlink::PayloadParser;
 
@@ -69,13 +71,13 @@ pub struct Station {
     pub bss_dtim_period: Option<u8>,
     // BSS beacon interval.
     pub bss_beacon_interval: Option<u16>,
-    // TxBitrate
-    // RxBitrate
-    // BssParam
-    // StaFlags
+    // Receive bitrate information.
+    pub rx_bitrate: Option<RateInfo>,
+    // Transmit bitrate information.
+    pub tx_bitrate: Option<RateInfo>,
 }
 
-impl AttributeParser for Station {
+impl AttributeParser<Attribute> for Station {
     fn parse(handle: AttrHandle<Attribute>) -> Result<Self, AttrParseError> {
         let mut station = Station::default();
         let mut station_info_attr: Option<AttrHandle<'_, StationInfo>> = None;
@@ -164,6 +166,19 @@ impl AttributeParser for Station {
                     StationInfo::BeaconRx => {
                         station.beacon_rx = Some(u64::parse(&sub_attr)?);
                     }
+                    StationInfo::StaFlags => (), // TODO: Get station flags
+                    StationInfo::RxBitrate => {
+                        let sub_handle = sub_attr
+                            .get_nested_attributes::<NlRateInfo>()
+                            .map_err(|err| AttrParseError::new(err, StationInfo::TxBitrate))?;
+                        station.rx_bitrate = Some(RateInfo::parse(sub_handle)?);
+                    }
+                    StationInfo::TxBitrate => {
+                        let sub_handle = sub_attr
+                            .get_nested_attributes::<NlRateInfo>()
+                            .map_err(|err| AttrParseError::new(err, StationInfo::TxBitrate))?;
+                        station.tx_bitrate = Some(RateInfo::parse(sub_handle)?);
+                    }
                     StationInfo::TidStats => {
                         tid_stats_attr = Some(
                             sub_attr
@@ -209,7 +224,7 @@ impl AttributeParser for Station {
                                         tid_stats.tx_msdu_failed = Some(u64::parse(&tid_attr)?);
                                     }
                                     TidStats::Pad => (), // Attribute used for padding for 64-bit alignment.
-                                    TidStats::TxqStats => (), // TODO
+                                    TidStats::TxqStats => (), // TODO: Get txq stats.
                                     unhandled => println!(
                                         "Unhandled tid stats attribute 'TidStats::{:?}'",
                                         &unhandled
@@ -261,16 +276,17 @@ impl AttributeParser for Station {
 #[derive(Debug, Clone, Default)]
 /// Traffic identifier statistics.
 pub struct TrafficIdStats {
+    /// TID number 1-16 and 17 for non-QoS traffic.
     pub tid_number: u8,
-    /// Number of MSDUs received (u64).
+    /// Number of MSDUs received.
     pub rx_msdu: Option<u64>,
-    /// Number of MSDUs transmitted or attempted to transmit (u64).
+    /// Number of MSDUs transmitted or attempted to transmit.
     pub tx_msdu: Option<u64>,
-    /// Number of retries for transmitted MSDUs (not counting the first attempt; u64).
+    /// Number of retries for transmitted MSDUs (not counting the first attempt).
     pub tx_msdu_retries: Option<u64>,
-    /// Number of failed transmitted MSDUs (u64).
+    /// Number of failed transmitted MSDUs.
     pub tx_msdu_failed: Option<u64>,
-    /// TXQ stats (nested attribute).
+    /// TXQ statistics.
     pub txq_stats: Option<TransmitQueueStats>,
 }
 
@@ -281,4 +297,194 @@ impl TrafficIdStats {
             ..Default::default()
         }
     }
+}
+
+#[derive(Debug, Clone)]
+/// Station bitrate information.
+pub struct RateInfo {
+    /// Bitrate in 100kbit/s.
+    pub bitrate: u32,
+    /// MCS index.
+    pub mcs: u8,
+    /// Connection or frame type.
+    pub connection_type: ConnectionType,
+    /// Guard interval.
+    pub guard_interval: GuardIntervals,
+    /// Channel width.
+    pub channel_width: ChannelWidth,
+    /// Number of spatial streams.
+    stream_count: u8,
+    /// HE DCM value (0/1).
+    dcm_value: Option<u8>,
+    /// HE RU allocation, if not present then non-OFDMA is used.
+    ru_allocation: Option<HeRuAllocation>,
+}
+
+impl AttributeParser<NlRateInfo> for RateInfo {
+    fn parse(handle: AttrHandle<NlRateInfo>) -> Result<Self, AttrParseError> {
+        let mut bitrate_info = Self {
+            bitrate: 0,
+            mcs: 0,
+            connection_type: ConnectionType::Unknown,
+            // Default guard interval for HT & VHT when short GI is not set.
+            guard_interval: GuardIntervals::Usec0_8,
+            // Default channel width with HT if no other flags set.
+            channel_width: ChannelWidth::Width20,
+            stream_count: 0,
+            dcm_value: None,
+            ru_allocation: None,
+        };
+        for attr in handle.iter() {
+            match &attr.nla_type {
+                NlRateInfo::Bitrate => {
+                    if bitrate_info.bitrate == 0 {
+                        bitrate_info.bitrate = u16::parse(&attr)? as u32;
+                    }
+                }
+                NlRateInfo::Mcs => {
+                    bitrate_info.connection_type = ConnectionType::HT;
+                    bitrate_info.mcs = u8::parse(&attr)?;
+                    if bitrate_info.mcs < 8 {
+                        bitrate_info.stream_count = 1;
+                    } else if bitrate_info.mcs < 16 {
+                        bitrate_info.stream_count = 2;
+                    } else if bitrate_info.mcs < 24 {
+                        bitrate_info.stream_count = 3;
+                    } else {
+                        bitrate_info.stream_count = 4;
+                    }
+                }
+                NlRateInfo::MhzWidth40 => {
+                    bitrate_info.channel_width = ChannelWidth::Width40;
+                }
+                NlRateInfo::ShortGuardInterval => {
+                    bitrate_info.guard_interval = GuardIntervals::Usec0_4;
+                }
+                NlRateInfo::Bitrate32 => {
+                    bitrate_info.bitrate = u32::parse(&attr)?;
+                }
+                NlRateInfo::VhtMcs => {
+                    bitrate_info.mcs = u8::parse(&attr)?;
+                    bitrate_info.connection_type = ConnectionType::VHT;
+                }
+                NlRateInfo::VhtNss => {
+                    bitrate_info.stream_count = u8::parse(&attr)?;
+                }
+                NlRateInfo::MhzWidth80 => {
+                    bitrate_info.channel_width = ChannelWidth::Width80;
+                }
+                NlRateInfo::MhzWidth80p80 => {
+                    bitrate_info.channel_width = ChannelWidth::Width80P80;
+                }
+                NlRateInfo::MhzWidth160 => {
+                    bitrate_info.channel_width = ChannelWidth::Width160;
+                }
+                NlRateInfo::MhzWidth10 => {
+                    bitrate_info.channel_width = ChannelWidth::Width10;
+                }
+                NlRateInfo::MhzWidth5 => {
+                    bitrate_info.channel_width = ChannelWidth::Width5;
+                }
+                NlRateInfo::HeMcs => {
+                    bitrate_info.mcs = u8::parse(&attr)?;
+                    bitrate_info.connection_type = ConnectionType::HE;
+                }
+                NlRateInfo::HeNss => {
+                    bitrate_info.stream_count = u8::parse(&attr)?;
+                }
+                NlRateInfo::HeGuardInterval => {
+                    let payload = handle
+                        .get_attr_payload_as::<HeGuardInterval>(NlRateInfo::HeGuardInterval)
+                        .map_err(|err| {
+                            AttrParseError::new(err.to_string(), NlRateInfo::HeGuardInterval)
+                        })?;
+                    bitrate_info.guard_interval = match payload {
+                        HeGuardInterval::Usec0_8 => GuardIntervals::Usec0_8,
+                        HeGuardInterval::Usec1_6 => GuardIntervals::Usec1_6,
+                        HeGuardInterval::Usec3_2 => GuardIntervals::Usec3_2,
+                        unknown => {
+                            println!("Unknown HE guard interval attribute {:?}", unknown);
+                            GuardIntervals::Unknown
+                        }
+                    }
+                }
+                NlRateInfo::HeDcm => {
+                    bitrate_info.dcm_value = Some(u8::parse(&attr)?);
+                }
+                NlRateInfo::HeRuAlloc => {
+                    let payload = handle
+                        .get_attr_payload_as::<HeRuAlloc>(NlRateInfo::HeRuAlloc)
+                        .map_err(|err| {
+                            AttrParseError::new(err.to_string(), NlRateInfo::HeRuAlloc)
+                        })?;
+                    let ru_allocation = match payload {
+                        HeRuAlloc::Alloc26 => HeRuAllocation::Alloc26,
+                        HeRuAlloc::Alloc52 => HeRuAllocation::Alloc52,
+                        HeRuAlloc::Alloc106 => HeRuAllocation::Alloc106,
+                        HeRuAlloc::Alloc242 => HeRuAllocation::Alloc242,
+                        HeRuAlloc::Alloc484 => HeRuAllocation::Alloc484,
+                        HeRuAlloc::Alloc996 => HeRuAllocation::Alloc996,
+                        HeRuAlloc::Alloc2x996 => HeRuAllocation::Alloc2x996,
+                        unknown => {
+                            println!("Unknown HE RU allocation attribute {:?}", unknown);
+                            HeRuAllocation::Unknown
+                        }
+                    };
+                    bitrate_info.ru_allocation = Some(ru_allocation);
+                }
+                unhandled => {
+                    println!("Unhandled rate info attribute {:?}", unhandled);
+                }
+            }
+        }
+        Ok(bitrate_info)
+    }
+}
+
+#[derive(Debug, Clone)]
+pub enum ConnectionType {
+    /// High Throughput (802.11n).
+    HT,
+    /// Very High Throughput (802.11ac).
+    VHT,
+    /// High Efficiency (802.11ax).
+    HE,
+    /// Unknown connection type.
+    Unknown,
+}
+
+#[derive(Debug, Clone)]
+/// Wifi connection guard intervals.
+pub enum GuardIntervals {
+    /// 0.4 microseconds.
+    Usec0_4,
+    /// 0.8 microseconds.
+    Usec0_8,
+    /// 1.6 microseconds.
+    Usec1_6,
+    /// 3.2 microseconds.
+    Usec3_2,
+    /// Unknown guard interval.
+    Unknown,
+}
+
+#[derive(Debug, Clone)]
+/// HE RU allocation values.
+pub enum HeRuAllocation {
+    /// 26-tone RU allocation.
+    Alloc26,
+    /// 52-tone RU allocation.
+    Alloc52,
+    /// 106-tone RU allocation.
+    Alloc106,
+    /// 242-tone RU allocation.
+    Alloc242,
+    /// 484-tone RU allocation.
+    Alloc484,
+    /// 996-tone RU allocation.
+    Alloc996,
+    /// 2x996-tone RU allocation.
+    Alloc2x996,
+    /// Unknown RU allocation.
+    Unknown,
 }

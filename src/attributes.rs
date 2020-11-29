@@ -57,6 +57,8 @@ impl_var_trait!(
     // `Attribute::WiphyChannelType` attribute or the attributes `Attribute::ChannelWidth` and if
     // needed `Attribute::CenterFreq1` and `Attribute::CenterFreq2`.
     WiphyFreq                    => 38,
+    // Included with `WiphyFreq` if HT20 or HT40 are to be used (i.e., HT disabled if not included).
+    // This attribute is deprecated.
     WiphyChannelType             => 39,
     KeyDefaultMgmt               => 40,
     MgmtSubtype                  => 41,
@@ -528,9 +530,9 @@ impl_var_trait!(
     Bitrate             => 1,
     // MCS index for 802.11n (u8).
     Mcs                 => 2,
-    // 40 MHz dualchannel bitrate.
+    // 40 MHz dualchannel bitrate (flag).
     MhzWidth40          => 3,
-    // 400ns guard interval.
+    // 400ns guard interval (flag).
     ShortGuardInterval  => 4,
     // Total bitrate (u32, 100kbit/s).
     Bitrate32           => 5,
@@ -538,17 +540,17 @@ impl_var_trait!(
     VhtMcs              => 6,
     // Number of streams in VHT (u8)
     VhtNss              => 7,
-    // 80 MHz VHT rate.
+    // 80 MHz VHT rate (flag).
     MhzWidth80          => 8,
     // Unused. 80+80 is treated the same as 160 for purposes of the bitrates.
     MhzWidth80p80       => 9,
-    // 160 MHz VHT rate.
+    // 160 MHz VHT rate (flag).
     MhzWidth160         => 10,
     // 10 MHz width. Note that this is a legacy rate and will be reported as the
-    // actual bitrate, i.e. half the base (20 MHz) rate.
+    // actual bitrate, i.e. half the base (20 MHz) rate (flag).
     MhzWidth10          => 11,
     // 5 MHz width. Note that this is a legacy rate and will be reported as the
-    // actual bitrate, i.e. half the base (20 MHz) rate.
+    // actual bitrate, i.e. half the base (20 MHz) rate (flag).
     MhzWidth5           => 12,
     // HE MCS index (u8, 0-11).
     HeMcs               => 13,

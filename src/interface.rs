@@ -48,7 +48,7 @@ pub struct WirelessInterface {
     pub txq_statistics: Option<TransmitQueueStats>,
 }
 
-impl AttributeParser for WirelessInterface {
+impl AttributeParser<Attribute> for WirelessInterface {
     fn parse(handle: AttrHandle<Attribute>) -> Result<Self, AttrParseError> {
         let mut interface = WirelessInterface::default();
         let mut interface_type_payload: Option<NlInterfaceType> = None;
@@ -74,6 +74,7 @@ impl AttributeParser for WirelessInterface {
                 Attribute::WiphyFreq => {
                     interface.frequency = Some(u32::parse(&attr)?);
                 }
+                Attribute::WiphyChannelType => (), // Attribute is deprecated.
                 Attribute::WiphyFreqOffset => {
                     interface.frequency_offset = Some(u32::parse(&attr)?);
                 }
@@ -112,10 +113,7 @@ impl AttributeParser for WirelessInterface {
                     );
                 }
                 unhandled => {
-                    return Err(AttrParseError::new(
-                        format!("Unhandled wireless interface attribute"),
-                        unhandled,
-                    ));
+                    println!("Unhandled wireless interface attribute {:?}", unhandled);
                 }
             }
         }

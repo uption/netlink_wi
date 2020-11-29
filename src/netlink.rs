@@ -2,6 +2,7 @@ use std::cell::RefCell;
 use std::convert::TryInto;
 use std::fmt;
 
+use neli::consts::NlAttrType;
 use neli::consts::{NlFamily, NlmF, Nlmsg};
 use neli::err::NlError;
 use neli::genl::Genlmsghdr;
@@ -62,7 +63,9 @@ impl NlSocket {
         self.socket.borrow_mut().send_nl(payload.into())
     }
 
-    fn read<T: AttributeParser>(&self) -> Result<Vec<Result<T, AttrParseError>>, NlError> {
+    fn read<P: AttributeParser<Attribute>>(
+        &self,
+    ) -> Result<Vec<Result<P, AttrParseError>>, NlError> {
         let mut responses = Vec::new();
         for response in self.socket.borrow_mut().iter::<Nlmsg, Neli80211Header>() {
             let response = response?;
@@ -76,7 +79,7 @@ impl NlSocket {
                 }
                 Nlmsg::UnrecognizedVariant(nl_type) if nl_type == self.nl_type => {
                     let handle = response.nl_payload.get_attr_handle();
-                    responses.push(T::parse(handle));
+                    responses.push(P::parse(handle));
                 }
                 Nlmsg::UnrecognizedVariant(nl_type) => println!("Unrecognized nl_type {}", nl_type),
             };
@@ -164,9 +167,10 @@ impl Into<Neli80211Header> for Nl80211HeaderBuilder {
     }
 }
 
-pub(crate) trait AttributeParser {
-    fn parse(handle: AttrHandle<Attribute>) -> Result<Self, AttrParseError>
+pub(crate) trait AttributeParser<T> {
+    fn parse(handle: AttrHandle<T>) -> Result<Self, AttrParseError>
     where
+        T: NlAttrType,
         Self: Sized;
 }
 

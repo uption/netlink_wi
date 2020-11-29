@@ -5,6 +5,6 @@ fn main() {
     let interfaces = socket.list_interfaces().unwrap();
     for interface in interfaces {
         let interface = interface.unwrap();
-        println!("{:?}", interface);
+        println!("{:#?}", interface);
     }
 }
