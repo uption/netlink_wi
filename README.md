@@ -11,6 +11,7 @@ in Linux operating system using netlink protocol.
 
 - Unit tests.
 - Documentation for the public API.
-- Implement logging?
+- Implement logging.
 - Return wireless channel number.
-- Implement nested attributes.
+- Handle station flags.
+- Handle station txq stats.
