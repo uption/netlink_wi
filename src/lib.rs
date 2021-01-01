@@ -9,3 +9,4 @@ mod station;
 pub use error::AttrParseError;
 pub use interface::WirelessInterface;
 pub use netlink::NlSocket;
+pub use station::WirelessStation;

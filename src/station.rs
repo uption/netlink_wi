@@ -11,7 +11,7 @@ use super::netlink::PayloadParser;
 
 #[derive(Debug, Clone, Default)]
 /// Station information returned from netlink.
-pub struct Station {
+pub struct WirelessStation {
     /// Network interface index.
     pub interface_index: u32,
     /// Station MAC address (BSSID).
@@ -77,9 +77,9 @@ pub struct Station {
     pub tx_bitrate: Option<RateInfo>,
 }
 
-impl AttributeParser<Attribute> for Station {
+impl AttributeParser<Attribute> for WirelessStation {
     fn parse(handle: AttrHandle<Attribute>) -> Result<Self, AttrParseError> {
-        let mut station = Station::default();
+        let mut station = WirelessStation::default();
         let mut station_info_attr: Option<AttrHandle<'_, StationInfo>> = None;
         let mut tid_stats_attr: Option<AttrHandle<'_, u16>> = None;
         let mut bss_param_attr: Option<AttrHandle<'_, BssParam>> = None;

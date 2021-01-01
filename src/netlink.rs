@@ -14,7 +14,7 @@ use super::attributes::Attribute;
 use super::commands::Command;
 use super::error::AttrParseError;
 use super::interface::WirelessInterface;
-use super::station::Station;
+use super::station::WirelessStation;
 
 const NL80211_VERSION: u8 = 1;
 type Neli80211Header = Genlmsghdr<Command, Attribute>;
@@ -49,14 +49,14 @@ impl NlSocket {
     pub fn list_stations(
         &self,
         if_index: u32,
-    ) -> Result<Vec<Result<Station, AttrParseError>>, NlError> {
+    ) -> Result<Vec<Result<WirelessStation, AttrParseError>>, NlError> {
         let nl_payload = Nl80211HeaderBuilder::new(Command::GetStation)
             .add_attribute(Attribute::Ifindex, if_index.to_le_bytes().to_vec());
         let msg = NetlinkHeaderBuilder::new(self.nl_type, nl_payload)
             .add_flag(NlmF::Request)
             .add_flag(NlmF::Dump);
         self.send(msg)?;
-        self.read::<Station>()
+        self.read::<WirelessStation>()
     }
 
     fn send(&self, payload: NetlinkHeaderBuilder) -> Result<(), NlError> {
