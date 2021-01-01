@@ -7,6 +7,10 @@ mod netlink;
 mod station;
 
 pub use error::AttrParseError;
-pub use interface::WirelessInterface;
+pub use interface::{
+    ChannelWidth, InterfaceType, MacAddress, TransmitQueueStats, WirelessInterface,
+};
 pub use netlink::NlSocket;
-pub use station::WirelessStation;
+pub use station::{
+    ConnectionType, GuardIntervals, HeRuAllocation, RateInfo, TrafficIdStats, WirelessStation,
+};

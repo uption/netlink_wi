@@ -1,4 +1,5 @@
 use neli::nlattr::AttrHandle;
+use std::fmt;
 use std::time::Duration;
 
 use super::attributes::{
@@ -447,6 +448,18 @@ pub enum ConnectionType {
     HE,
     /// Unknown connection type.
     Unknown,
+}
+
+impl fmt::Display for ConnectionType {
+    fn fmt(&self, f: &mut fmt::Formatter<'_>) -> fmt::Result {
+        let as_string = match self {
+            Self::HT => "HT",
+            Self::VHT => "VHT",
+            Self::HE => "HE",
+            Self::Unknown => "Unknown",
+        };
+        write!(f, "{}", as_string)
+    }
 }
 
 #[derive(Debug, Clone)]
