@@ -1,11 +1,10 @@
-use neli::consts::Cmd;
-use neli::{impl_var, impl_var_base, impl_var_trait};
+use neli::impl_var;
 
-impl_var_trait!(
+impl_var!(
     /// Supported nl80211 commands.
     ///
     /// nl80211_commands enum from https://github.com/torvalds/linux/blob/master/include/uapi/linux/nl80211.h
-    Command, u8, Cmd,
+    pub Command, u8,
 
     Unspec => 0,
 
@@ -232,3 +231,5 @@ impl_var_trait!(
 
     ControlPortFrameTxStatus => 139
 );
+
+impl neli::consts::genl::Cmd for Command {}

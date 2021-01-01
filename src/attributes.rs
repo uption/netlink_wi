@@ -1,12 +1,11 @@
-use neli::consts::NlAttrType;
-use neli::{impl_var, impl_var_base, impl_var_trait};
+use neli::impl_var;
 
-impl_var_trait!(
+impl_var!(
     /// Nl80211 netlink attributes.
     ///
     /// nl80211_attrs enum from:
     /// https://github.com/torvalds/linux/blob/master/include/uapi/linux/nl80211.h
-    Attribute, u16, NlAttrType,
+    pub Attribute, u16,
     Unspec                       => 0,
     // Index of wiphy to operate on, cf. /sys/class/ieee80211/<phyname>/index.
     Wiphy                        => 1,
@@ -334,6 +333,8 @@ impl_var_trait!(
     S1gCapabilityMask            => 297
 );
 
+impl neli::consts::genl::NlAttrType for Attribute {}
+
 impl_var!(
     /// Nl80211 (virtual) interface types.
     ///
@@ -342,7 +343,7 @@ impl_var!(
     ///
     /// nl80211_iftype enum from:
     /// https://github.com/torvalds/linux/blob/master/include/uapi/linux/nl80211.h
-    InterfaceType, u8,
+    pub InterfaceType, u8,
     // Unspecified type, driver decides.
     Unspecified =>  0,
     // Independent BSS member.
@@ -374,7 +375,7 @@ impl_var!(
     Nan =>          12
 );
 
-impl_var_trait!(
+impl_var!(
     /// Nl80211 per TXQ (transmit queue) statistics.
     ///
     /// These attribute types are used with `Attribute.TxqStats` to get
@@ -382,7 +383,7 @@ impl_var_trait!(
     ///
     /// nl80211_txq_stats enum from:
     /// https://github.com/torvalds/linux/blob/master/include/uapi/linux/nl80211.h
-    TxqStats, u16, NlAttrType,
+    pub TxqStats, u16,
     // Attribute number 0 is reserved.
     Invalid =>          0,
     // Number of bytes currently backlogged.
@@ -409,7 +410,7 @@ impl_var_trait!(
     MaxFlows =>         11
 );
 
-impl_var_trait!(
+impl_var!(
     /// Nl80211 netlink station information attributes.
     ///
     /// These attribute types are used with `Attribute.StaInfo`
@@ -417,7 +418,7 @@ impl_var_trait!(
     ///
     /// nl80211_sta_info enum from:
     /// https://github.com/torvalds/linux/blob/master/include/uapi/linux/nl80211.h
-    StationInfo, u16, NlAttrType,
+    pub StationInfo, u16,
     // Attribute number 0 is reserved.
     Invalid            => 0,
     // Time since last activity.
@@ -515,7 +516,7 @@ impl_var_trait!(
     ConnectedToAs      => 43
 );
 
-impl_var_trait!(
+impl_var!(
     /// Nl80211 bitrate information.
     ///
     /// These attribute types are used with `Attribute.StaInfo.RxBitrate` or
@@ -523,7 +524,7 @@ impl_var_trait!(
     ///
     /// nl80211_rate_info enum from:
     /// https://github.com/torvalds/linux/blob/master/include/uapi/linux/nl80211.h
-    RateInfo, u16, NlAttrType,
+    pub RateInfo, u16,
     // Attribute number 0 is reserved.
     Invalid             => 0,
     // Total bitrate (u16, 100kbit/s).
@@ -565,14 +566,14 @@ impl_var_trait!(
     HeRuAlloc           => 17
 );
 
-impl_var_trait!(
+impl_var!(
     /// Nl80211 BSS information collected by STA.
     ///
     /// These attribute types are used with `StaInfo.BssParam`.
     ///
     /// nl80211_sta_bss_param enum from:
     /// https://github.com/torvalds/linux/blob/master/include/uapi/linux/nl80211.h
-    BssParam, u16, NlAttrType,
+    pub BssParam, u16,
     // Attribute number 0 is reserved.
     Invalid =>          0,
     // Whether CTS protection is enabled (flag).
@@ -587,14 +588,14 @@ impl_var_trait!(
     BeaconInterval =>   5
 );
 
-impl_var_trait!(
+impl_var!(
     /// Nl80211 HE guard interval.
     ///
     /// These attribute types are used with `RateInfo.HeGuardInterval`
     ///
     /// nl80211_he_gi enum from:
     /// https://github.com/torvalds/linux/blob/master/include/uapi/linux/nl80211.h
-    HeGuardInterval, u16, NlAttrType,
+    pub HeGuardInterval, u16,
     // 0.8 usec
     Usec0_8 => 0,
     // 1.6 usec
@@ -603,14 +604,14 @@ impl_var_trait!(
     Usec3_2 => 2
 );
 
-impl_var_trait!(
+impl_var!(
     /// Nl80211 HE RU allocation values.
     ///
     /// These attribute types are used with `RateInfo.HeRuAlloc`.
     ///
     /// nl80211_he_ru_alloc enum from:
     /// https://github.com/torvalds/linux/blob/master/include/uapi/linux/nl80211.h
-    HeRuAlloc, u16, NlAttrType,
+    pub HeRuAlloc, u16,
     // 26-tone RU allocation.
     Alloc26     => 0,
     // 52-tone RU allocation.
@@ -627,14 +628,14 @@ impl_var_trait!(
     Alloc2x996  => 6
 );
 
-impl_var_trait!(
+impl_var!(
     /// Nl80211 per TID (traffic identifier) statistics attributes.
     ///
     /// These attributes are used with `StationInfo.TidStats`.
     ///
     /// nl80211_tid_stats enum from:
     /// https://github.com/torvalds/linux/blob/master/include/uapi/linux/nl80211.h
-    TidStats, u16, NlAttrType,
+    pub TidStats, u16,
     // Attribute number 0 is reserved.
     Invalid =>          0,
     // Number of MSDUs received (u64).

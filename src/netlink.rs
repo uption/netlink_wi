@@ -2,32 +2,32 @@ use std::cell::RefCell;
 use std::convert::TryInto;
 use std::fmt;
 
-use neli::consts::NlAttrType;
-use neli::consts::{NlFamily, NlmF, Nlmsg};
+use neli::consts::nl::{NlTypeWrapper, NlmF, NlmFFlags, Nlmsg};
+use neli::consts::socket::NlFamily;
 use neli::err::NlError;
 use neli::genl::Genlmsghdr;
-use neli::nl::Nlmsghdr;
-use neli::nlattr::{AttrHandle, Nlattr};
-use neli::socket::NlSocket as NeliSocket;
+use neli::nl::{NlPayload, Nlmsghdr};
+use neli::socket::NlSocketHandle;
+use neli::types::{Buffer, GenlBuffer};
+use neli::utils::U32Bitmask;
+use neli::{attr::AttrHandle, consts::genl::NlAttrType};
+use neli::{consts::genl::NlAttrTypeWrapper, genl::Nlattr};
 
 use super::attributes::Attribute;
 use super::commands::Command;
 use super::error::AttrParseError;
 use super::interface::WirelessInterface;
-use super::station::Station;
 
 const NL80211_VERSION: u8 = 1;
-type Neli80211Header = Genlmsghdr<Command, Attribute>;
-
 pub struct NlSocket {
-    socket: RefCell<NeliSocket>,
+    socket: RefCell<NlSocketHandle>,
     nl_type: u16,
 }
 
 impl NlSocket {
     /// Connect netlink socket.
     pub fn connect() -> Result<Self, NlError> {
-        let mut socket = NeliSocket::connect(NlFamily::Generic, None, None, true)?;
+        let mut socket = NlSocketHandle::connect(NlFamily::Generic, None, U32Bitmask::empty())?;
         let nl_type = socket.resolve_genl_family("nl80211")?;
         Ok(Self {
             socket: RefCell::new(socket),
@@ -35,206 +35,102 @@ impl NlSocket {
         })
     }
 
-    pub fn list_interfaces(
-        &self,
-    ) -> Result<Vec<Result<WirelessInterface, AttrParseError>>, NlError> {
-        let nl_payload = Nl80211HeaderBuilder::new(Command::GetInterface);
-        let msg = NetlinkHeaderBuilder::new(self.nl_type, nl_payload)
-            .add_flag(NlmF::Request)
-            .add_flag(NlmF::Dump);
-        self.send(msg)?;
-        self.read::<WirelessInterface>()
-    }
-
-    pub fn list_stations(
-        &self,
-        if_index: u32,
-    ) -> Result<Vec<Result<Station, AttrParseError>>, NlError> {
-        let nl_payload = Nl80211HeaderBuilder::new(Command::GetStation)
-            .add_attribute(Attribute::Ifindex, if_index.to_le_bytes().to_vec());
-        let msg = NetlinkHeaderBuilder::new(self.nl_type, nl_payload)
-            .add_flag(NlmF::Request)
-            .add_flag(NlmF::Dump);
-        self.send(msg)?;
-        self.read::<Station>()
-    }
-
-    fn send(&self, payload: NetlinkHeaderBuilder) -> Result<(), NlError> {
-        self.socket.borrow_mut().send_nl(payload.into())
-    }
-
-    fn read<P: AttributeParser<Attribute>>(
-        &self,
-    ) -> Result<Vec<Result<P, AttrParseError>>, NlError> {
-        let mut responses = Vec::new();
-        for response in self.socket.borrow_mut().iter::<Nlmsg, Neli80211Header>() {
-            let response = response?;
-            match response.nl_type {
-                Nlmsg::Noop => (),
-                Nlmsg::Overrun => (),
-                Nlmsg::Done => break,
-                Nlmsg::Error => {
-                    println!("Kernel returned an error");
-                    break;
-                }
-                Nlmsg::UnrecognizedVariant(nl_type) if nl_type == self.nl_type => {
-                    let handle = response.nl_payload.get_attr_handle();
-                    responses.push(P::parse(handle));
-                }
-                Nlmsg::UnrecognizedVariant(nl_type) => println!("Unrecognized nl_type {}", nl_type),
-            };
-        }
-        Ok(responses)
-    }
-}
-
-/// Builder for netlink top level header and payload.
-struct NetlinkHeaderBuilder {
-    nl_type: u16,
-    flags: Vec<NlmF>,
-    header_builder: Nl80211HeaderBuilder,
-}
-
-impl NetlinkHeaderBuilder {
-    fn new(nl_type: u16, header_builder: Nl80211HeaderBuilder) -> Self {
-        Self {
-            nl_type,
-            flags: Vec::new(),
-            header_builder,
-        }
-    }
-
-    fn add_flag(self, flag: NlmF) -> Self {
-        let mut nl_flags = self.flags.clone();
-        nl_flags.push(flag);
-        Self {
-            nl_type: self.nl_type,
-            flags: nl_flags,
-            header_builder: self.header_builder,
-        }
-    }
-}
-
-impl Into<Nlmsghdr<u16, Neli80211Header>> for NetlinkHeaderBuilder {
-    fn into(self) -> Nlmsghdr<u16, Neli80211Header> {
-        Nlmsghdr::new(
+    pub fn list_interfaces(&self) -> Result<Vec<Result<WirelessInterface, NlError>>, NlError> {
+        let attrs = GenlBuffer::<NlAttrTypeWrapper, Buffer>::new();
+        let genlhdr = Genlmsghdr::new(Command::GetInterface, NL80211_VERSION, attrs);
+        let nlhdr = Nlmsghdr::new(
             None,
             self.nl_type,
-            self.flags,
+            NlmFFlags::new(&[NlmF::Request, NlmF::Dump]),
             None,
             None,
-            self.header_builder.into(),
-        )
-    }
-}
+            NlPayload::Payload(genlhdr),
+        );
+        self.socket.borrow_mut().send(nlhdr)?;
 
-/// Builder for 802.11 netlink header and payload.
-struct Nl80211HeaderBuilder {
-    command: Command,
-    attributes: Vec<(Attribute, Vec<u8>)>,
-}
-
-impl Nl80211HeaderBuilder {
-    fn new(command: Command) -> Self {
-        Self {
-            command,
-            attributes: Vec::new(),
+        let mut interfaces = Vec::new();
+        for response_result in self
+            .socket
+            .borrow_mut()
+            .iter::<Genlmsghdr<Command, Attribute>>(false)
+        {
+            let response = response_result?;
+            if let NlTypeWrapper::Nlmsg(Nlmsg::Error) = response.nl_type {
+                return Err(NlError::new(
+                    "An error occurred while retrieving available families",
+                ));
+            }
+            let handle = response.get_payload()?.get_attr_handle();
+            interfaces.push(WirelessInterface::parse(handle));
         }
+
+        Ok(interfaces)
     }
 
-    #[allow(dead_code)]
-    fn add_attribute(self, nla_type: Attribute, payload: Vec<u8>) -> Self {
-        let mut attributes = self.attributes.clone();
-        attributes.push((nla_type, payload));
-        Self {
-            command: self.command,
-            attributes,
-        }
-    }
-}
+    // pub fn list_stations(
+    //     &self,
+    //     if_index: u32,
+    // ) -> Result<Vec<Result<Station, AttrParseError>>, NlError> {
+    //     let mut attrs = GenlBuffer::<NlAttrTypeWrapper, Buffer>::new();
+    //     attrs.push(Nlattr::new(
+    //         None,
+    //         false,
+    //         true,
+    //         Attribute::Ifindex,
+    //         if_index.to_le_bytes().to_vec(),
+    //     ));
+    //     let nl_payload = Genlmsghdr::new(Command::GetStation, NL80211_VERSION, attrs)
+    //         .expect("Failed to create generic netlink header and payload");
+    //     let msg = Nlmsghdr::new(
+    //         None,
+    //         self.nl_type,
+    //         NlmFFlags::new(&[NlmF::Request, NlmF::Dump]),
+    //         None,
+    //         None,
+    //         nl_payload,
+    //     );
+    //     self.socket.borrow_mut().send(msg)?;
+    //     self.read::<Station>()
+    // }
 
-impl Into<Neli80211Header> for Nl80211HeaderBuilder {
-    fn into(self) -> Neli80211Header {
-        let attrs = self
-            .attributes
-            .into_iter()
-            .map(|(nla_type, payload)| {
-                Nlattr::new(None, nla_type, payload).expect("Failed to serialize Nlattr")
-            })
-            .collect();
-        Genlmsghdr::new(self.command, NL80211_VERSION, attrs)
-            .expect("Failed to create generic netlink header and payload")
-    }
+    // // fn send(&self, payload: NetlinkHeaderBuilder) -> Result<(), NlError> {
+    // //     self.socket.borrow_mut().send_nl(payload.into())
+    // // }
+
+    // fn read<P: AttributeParser<Attribute>>(
+    //     &self,
+    // ) -> Result<Vec<Result<P, AttrParseError>>, NlError> {
+    //     let mut responses = Vec::new();
+    //     for response in self
+    //         .socket
+    //         .borrow_mut()
+    //         .iter::<Genlmsghdr<Command, Attribute>>()
+    //     {
+    //         let response = response?;
+    //         match response.nl_type {
+    //             Nlmsg::Noop => (),
+    //             Nlmsg::Overrun => (),
+    //             Nlmsg::Done => break,
+    //             Nlmsg::Error => {
+    //                 println!("Kernel returned an error");
+    //                 break;
+    //             }
+    //             Nlmsg::UnrecognizedVariant(nl_type) if nl_type == self.nl_type => {
+    //                 let handle = response.nl_payload.get_attr_handle();
+    //                 responses.push(P::parse(handle));
+    //             }
+    //             Nlmsg::UnrecognizedVariant(nl_type) => println!("Unrecognized nl_type {}", nl_type),
+    //         };
+    //     }
+    //     Ok(responses)
+    // }
 }
 
 pub(crate) trait AttributeParser<T> {
-    fn parse(handle: AttrHandle<T>) -> Result<Self, AttrParseError>
+    fn parse(
+        handle: AttrHandle<GenlBuffer<Attribute, Buffer>, Nlattr<Attribute, Buffer>>,
+    ) -> Result<Self, NlError>
     where
         T: NlAttrType,
         Self: Sized;
-}
-
-pub(crate) trait PayloadParser<T> {
-    fn parse(payload: &Nlattr<T, Vec<u8>>) -> Result<Self, AttrParseError>
-    where
-        T: Clone + fmt::Debug,
-        Self: Sized;
-}
-
-impl<T: Clone + fmt::Debug> PayloadParser<T> for bool {
-    fn parse(attr: &Nlattr<T, Vec<u8>>) -> Result<Self, AttrParseError> {
-        let num = u8::parse(&attr)?;
-        match num {
-            0 => Ok(false),
-            _ => Ok(true),
-        }
-    }
-}
-
-impl<T: Clone + fmt::Debug> PayloadParser<T> for u8 {
-    fn parse(attr: &Nlattr<T, Vec<u8>>) -> Result<Self, AttrParseError> {
-        let payload: [u8; 1] = attr.payload.clone().try_into().map_err(|_| {
-            AttrParseError::new(
-                format!("Wrong length ({} bits) for u8", attr.payload.len() * 8),
-                attr.nla_type.clone(),
-            )
-        })?;
-        Ok(u8::from_le_bytes(payload))
-    }
-}
-
-impl<T: Clone + fmt::Debug> PayloadParser<T> for u16 {
-    fn parse(attr: &Nlattr<T, Vec<u8>>) -> Result<Self, AttrParseError> {
-        let payload: [u8; 2] = attr.payload.clone().try_into().map_err(|_| {
-            AttrParseError::new(
-                format!("Wrong length ({} bits) for u16", attr.payload.len() * 8),
-                attr.nla_type.clone(),
-            )
-        })?;
-        Ok(u16::from_le_bytes(payload))
-    }
-}
-
-impl<T: Clone + fmt::Debug> PayloadParser<T> for u32 {
-    fn parse(attr: &Nlattr<T, Vec<u8>>) -> Result<Self, AttrParseError> {
-        let payload: [u8; 4] = attr.payload.clone().try_into().map_err(|_| {
-            AttrParseError::new(
-                format!("Wrong length ({} bits) for u32", attr.payload.len() * 8),
-                attr.nla_type.clone(),
-            )
-        })?;
-        Ok(u32::from_le_bytes(payload))
-    }
-}
-
-impl<T: Clone + fmt::Debug> PayloadParser<T> for u64 {
-    fn parse(attr: &Nlattr<T, Vec<u8>>) -> Result<Self, AttrParseError> {
-        let payload: [u8; 8] = attr.payload.clone().try_into().map_err(|_| {
-            AttrParseError::new(
-                format!("Wrong length ({} bits) for u64", attr.payload.len() * 8),
-                attr.nla_type.clone(),
-            )
-        })?;
-        Ok(u64::from_le_bytes(payload))
-    }
 }

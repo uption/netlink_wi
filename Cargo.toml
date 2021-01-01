@@ -22,4 +22,4 @@ name = "netlink_wi"
 path = "src/lib.rs"
 
 [dependencies]
-neli = "0.4.4"
+neli = "0.5.1"

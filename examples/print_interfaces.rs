@@ -6,5 +6,6 @@ fn main() {
     for interface in interfaces {
         let interface = interface.unwrap();
         println!("{:#?}", interface);
+        println!("{}", interface.mac);
     }
 }

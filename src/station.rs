@@ -1,4 +1,4 @@
-use neli::nlattr::AttrHandle;
+use neli::attr::AttrHandle;
 use std::time::Duration;
 
 use super::attributes::{
@@ -78,7 +78,7 @@ pub struct Station {
 }
 
 impl AttributeParser<Attribute> for Station {
-    fn parse(handle: AttrHandle<Attribute>) -> Result<Self, AttrParseError> {
+    fn parse(handle: AttrHandle<Attribute, &Attribute>) -> Result<Self, AttrParseError> {
         let mut station = Station::default();
         let mut station_info_attr: Option<AttrHandle<'_, StationInfo>> = None;
         let mut tid_stats_attr: Option<AttrHandle<'_, u16>> = None;
@@ -317,7 +317,7 @@ pub struct RateInfo {
 }
 
 impl AttributeParser<NlRateInfo> for RateInfo {
-    fn parse(handle: AttrHandle<NlRateInfo>) -> Result<Self, AttrParseError> {
+    fn parse(handle: AttrHandle<NlRateInfo, &NlRateInfo>) -> Result<Self, AttrParseError> {
         let mut bitrate_info = Self {
             bitrate: 0,
             mcs: 0,
