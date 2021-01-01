@@ -261,12 +261,12 @@ impl std::default::Default for MacAddress {
 
 impl fmt::Display for MacAddress {
     fn fmt(&self, f: &mut fmt::Formatter<'_>) -> fmt::Result {
-        let hex: Vec<String> = self
+        let hex = self
             .address_bytes
             .iter()
-            .map(|x| format!("{:X?}", x))
-            .collect();
-        let hex = hex.join(":");
+            .map(|x| format!("{:02X}", x))
+            .collect::<Vec<String>>()
+            .join(":");
         write!(f, "{}", hex)
     }
 }
