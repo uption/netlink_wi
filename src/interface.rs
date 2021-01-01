@@ -202,7 +202,7 @@ impl AttributeParser<Attribute> for WirelessInterface {
                     }
                     unhandled => {
                         return Err(AttrParseError::new(
-                            format!("Unhandled txq statistics attribute"),
+                            "Unhandled txq statistics attribute",
                             unhandled,
                         ));
                     }

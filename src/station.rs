@@ -203,36 +203,32 @@ impl AttributeParser<Attribute> for Station {
             if let Some(sub_handle) = tid_stats_attr {
                 let mut all_tid_stats: [TrafficIdStats; 17] = Default::default();
                 for sub_attr in sub_handle.iter() {
-                    match &sub_attr.nla_type {
-                        i => {
-                            let nested_handle = sub_attr
-                                .get_nested_attributes::<TidStats>()
-                                .map_err(|err| AttrParseError::new(err, StationInfo::TidStats))?;
-                            for tid_attr in nested_handle.iter() {
-                                let mut tid_stats = TrafficIdStats::new(*i as u8);
-                                match &tid_attr.nla_type {
-                                    TidStats::RxMsdu => {
-                                        tid_stats.rx_msdu = Some(u64::parse(&tid_attr)?);
-                                    }
-                                    TidStats::TxMsdu => {
-                                        tid_stats.tx_msdu = Some(u64::parse(&tid_attr)?);
-                                    }
-                                    TidStats::TxMsduRetries => {
-                                        tid_stats.tx_msdu_retries = Some(u64::parse(&tid_attr)?);
-                                    }
-                                    TidStats::TxMsduFailed => {
-                                        tid_stats.tx_msdu_failed = Some(u64::parse(&tid_attr)?);
-                                    }
-                                    TidStats::Pad => (), // Attribute used for padding for 64-bit alignment.
-                                    TidStats::TxqStats => (), // TODO: Get txq stats.
-                                    unhandled => println!(
-                                        "Unhandled tid stats attribute 'TidStats::{:?}'",
-                                        &unhandled
-                                    ),
-                                }
-                                all_tid_stats[*i as usize - 1] = tid_stats;
+                    let nested_handle = sub_attr
+                        .get_nested_attributes::<TidStats>()
+                        .map_err(|err| AttrParseError::new(err, StationInfo::TidStats))?;
+                    for tid_attr in nested_handle.iter() {
+                        let mut tid_stats = TrafficIdStats::new(sub_attr.nla_type as u8);
+                        match &tid_attr.nla_type {
+                            TidStats::RxMsdu => {
+                                tid_stats.rx_msdu = Some(u64::parse(&tid_attr)?);
                             }
+                            TidStats::TxMsdu => {
+                                tid_stats.tx_msdu = Some(u64::parse(&tid_attr)?);
+                            }
+                            TidStats::TxMsduRetries => {
+                                tid_stats.tx_msdu_retries = Some(u64::parse(&tid_attr)?);
+                            }
+                            TidStats::TxMsduFailed => {
+                                tid_stats.tx_msdu_failed = Some(u64::parse(&tid_attr)?);
+                            }
+                            TidStats::Pad => (), // Attribute used for padding for 64-bit alignment.
+                            TidStats::TxqStats => (), // TODO: Get txq stats.
+                            unhandled => println!(
+                                "Unhandled tid stats attribute 'TidStats::{:?}'",
+                                &unhandled
+                            ),
                         }
+                        all_tid_stats[sub_attr.nla_type as usize - 1] = tid_stats;
                     }
                 }
                 station.tid_stats = Some(all_tid_stats);
@@ -261,7 +257,7 @@ impl AttributeParser<Attribute> for Station {
                         }
                         unhandled => {
                             return Err(AttrParseError::new(
-                                format!("Unhandled BSS param attribute"),
+                                "Unhandled BSS param attribute",
                                 unhandled,
                             ));
                         }
