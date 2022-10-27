@@ -10,6 +10,8 @@ use neli::nl::Nlmsghdr;
 use neli::nlattr::{AttrHandle, Nlattr};
 use neli::socket::NlSocket as NeliSocket;
 
+use crate::wiphy::PhysicalDevice;
+
 use super::attributes::Attribute;
 use super::commands::Command;
 use super::error::AttrParseError;
@@ -57,6 +59,17 @@ impl NlSocket {
             .add_flag(NlmF::Dump);
         self.send(msg)?;
         self.read::<WirelessStation>()
+    }
+
+    pub fn list_physical_devices(
+        &self,
+    ) -> Result<Vec<Result<PhysicalDevice, AttrParseError>>, NlError> {
+        let nl_payload = Nl80211HeaderBuilder::new(Command::GetWiphy);
+        let msg = NetlinkHeaderBuilder::new(self.nl_type, nl_payload)
+            .add_flag(NlmF::Request)
+            .add_flag(NlmF::Dump);
+        self.send(msg)?;
+        self.read::<PhysicalDevice>()
     }
 
     fn send(&self, payload: NetlinkHeaderBuilder) -> Result<(), NlError> {
