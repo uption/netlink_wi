@@ -9,11 +9,15 @@ impl_var_trait!(
 
     Unspec => 0,
 
+    // Request information about a wiphy (physical wireless device) or dump
+    // request to get a list of all present wiphys.
     GetWiphy => 1,
     SetWiphy => 2,
     NewWiphy => 3,
     DelWiphy => 4,
 
+    // Request an interface's configuration. Either a dump request for all
+    // interfaces or a specific get with a single NL80211_ATTR_IFINDEX is supported.
     GetInterface => 5,
     SetInterface => 6,
     NewInterface => 7,

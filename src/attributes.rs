@@ -650,3 +650,40 @@ impl_var_trait!(
     // TXQ stats (nested attribute, see enum `TxqStats`).
     TxqStats =>         6
 );
+
+impl_var_trait!(
+    /// Nl80211 band attributes.
+    ///
+    /// nl80211_band_attr enum from:
+    /// https://github.com/torvalds/linux/blob/master/include/uapi/linux/nl80211.h
+    WiphyBands, u16, NlAttrType,
+    // Attribute number 0 is reserved.
+    Invalid =>          0,
+    // Supported frequencies in this band, an array of nested frequency attributes.
+    Frequencies =>      1,
+    // Supported bitrates in this band, an array of nested bitrate attributes.
+    Bitrates =>         2,
+    // 16-byte attribute containing the MCS set as defined in 802.11n.
+    HtMcsSet =>         3,
+    // HT capabilities, as in the HT information IE.
+    HtCapabilities =>   4,
+    // A-MPDU factor, as in 11n.
+    HtAmpduFactor =>    5,
+    // A-MPDU density, as in 11n.
+    HtAmpduDensity =>   6,
+    // 32-byte attribute containing the MCS set as defined in 802.11ac.
+    VhtMcsSet =>        7,
+    // VHT capabilities, as in the HT information IE.
+    VhtCapabilities =>  8,
+    // Nested array attribute, with each entry using attributes from enum
+    // nl80211_band_iftype_attr.
+    IftypeData =>       9,
+    // Bitmap that indicates the 2.16 GHz channel(s) that are allowed to be used
+    // for EDMG transmissions. Defined by IEEE P802.11ay/D4.0 section 9.4.2.251.
+    EdmgChannels =>     10,
+    // Channel BW Configuration subfield encodes the allowed channel bandwidth
+    // configurations. Defined by IEEE P802.11ay/D4.0 section 9.4.2.251, Table 13.
+    EdmgBwConfig =>     11,
+    // Highest band attribute currently defined.
+    BandAttrMax =>      12
+);

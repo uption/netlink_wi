@@ -5,6 +5,7 @@ mod error;
 mod interface;
 mod netlink;
 mod station;
+mod wiphy;
 
 pub use error::AttrParseError;
 pub use interface::{
