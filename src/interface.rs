@@ -56,46 +56,46 @@ impl AttributeParser<Attribute> for WirelessInterface {
         for attr in handle.iter() {
             match &attr.nla_type {
                 Attribute::Wiphy => {
-                    interface.wiphy_index = u32::parse(&attr)?;
+                    interface.wiphy_index = u32::parse(attr)?;
                 }
                 Attribute::Ifindex => {
-                    interface.interface_index = u32::parse(&attr)?;
+                    interface.interface_index = u32::parse(attr)?;
                 }
                 Attribute::Ifname => {
                     interface.name = String::from_utf8_lossy(&attr.payload)
                         .trim_matches('\0')
                         .to_string();
                 }
-                Attribute::Mac => interface.mac = MacAddress::parse(&attr)?,
-                Attribute::Generation => interface.generation = u32::parse(&attr)?,
+                Attribute::Mac => interface.mac = MacAddress::parse(attr)?,
+                Attribute::Generation => interface.generation = u32::parse(attr)?,
                 Attribute::Ssid => {
                     interface.ssid = Some(String::from_utf8_lossy(&attr.payload).to_string());
                 }
                 Attribute::WiphyFreq => {
-                    interface.frequency = Some(u32::parse(&attr)?);
+                    interface.frequency = Some(u32::parse(attr)?);
                 }
                 Attribute::WiphyChannelType => (), // Attribute is deprecated.
                 Attribute::WiphyFreqOffset => {
-                    interface.frequency_offset = Some(u32::parse(&attr)?);
+                    interface.frequency_offset = Some(u32::parse(attr)?);
                 }
                 Attribute::CenterFreq1 => {
-                    interface.center_frequency1 = Some(u32::parse(&attr)?);
+                    interface.center_frequency1 = Some(u32::parse(attr)?);
                 }
                 Attribute::CenterFreq2 => {
-                    interface.center_frequency2 = Some(u32::parse(&attr)?);
+                    interface.center_frequency2 = Some(u32::parse(attr)?);
                 }
                 Attribute::ChannelWidth => {
-                    let attr_channel_width = u32::parse(&attr)?;
+                    let attr_channel_width = u32::parse(attr)?;
                     interface.channel_width = Some(attr_channel_width.into());
                 }
                 Attribute::WiphyTxPowerLevel => {
-                    interface.tx_power = Some(u32::parse(&attr)?);
+                    interface.tx_power = Some(u32::parse(attr)?);
                 }
                 Attribute::Wdev => {
-                    interface.wdev = Some(u64::parse(&attr)?);
+                    interface.wdev = Some(u64::parse(attr)?);
                 }
                 Attribute::Use4addrFrames => {
-                    interface.use_4address_frames = Some(bool::parse(&attr)?);
+                    interface.use_4address_frames = Some(bool::parse(attr)?);
                 }
                 Attribute::Iftype => {
                     interface_type_payload = Some(
@@ -168,37 +168,37 @@ impl AttributeParser<Attribute> for WirelessInterface {
             for sub_attr in sub_handle.iter() {
                 match &sub_attr.nla_type {
                     TxqStats::BacklogBytes => {
-                        txq_statistics.backlog_bytes = Some(u32::parse(&sub_attr)?);
+                        txq_statistics.backlog_bytes = Some(u32::parse(sub_attr)?);
                     }
                     TxqStats::BacklogPackets => {
-                        txq_statistics.backlog_packets = Some(u32::parse(&sub_attr)?);
+                        txq_statistics.backlog_packets = Some(u32::parse(sub_attr)?);
                     }
                     TxqStats::Flows => {
-                        txq_statistics.flows = Some(u32::parse(&sub_attr)?);
+                        txq_statistics.flows = Some(u32::parse(sub_attr)?);
                     }
                     TxqStats::Drops => {
-                        txq_statistics.drops = Some(u32::parse(&sub_attr)?);
+                        txq_statistics.drops = Some(u32::parse(sub_attr)?);
                     }
                     TxqStats::EcnMarks => {
-                        txq_statistics.ecn_marks = Some(u32::parse(&sub_attr)?);
+                        txq_statistics.ecn_marks = Some(u32::parse(sub_attr)?);
                     }
                     TxqStats::Overlimit => {
-                        txq_statistics.overlimit = Some(u32::parse(&sub_attr)?);
+                        txq_statistics.overlimit = Some(u32::parse(sub_attr)?);
                     }
                     TxqStats::Overmemory => {
-                        txq_statistics.overmemory = Some(u32::parse(&sub_attr)?);
+                        txq_statistics.overmemory = Some(u32::parse(sub_attr)?);
                     }
                     TxqStats::Collisions => {
-                        txq_statistics.collisions = Some(u32::parse(&sub_attr)?);
+                        txq_statistics.collisions = Some(u32::parse(sub_attr)?);
                     }
                     TxqStats::TxBytes => {
-                        txq_statistics.tx_bytes = Some(u32::parse(&sub_attr)?);
+                        txq_statistics.tx_bytes = Some(u32::parse(sub_attr)?);
                     }
                     TxqStats::TxPackets => {
-                        txq_statistics.tx_packets = Some(u32::parse(&sub_attr)?);
+                        txq_statistics.tx_packets = Some(u32::parse(sub_attr)?);
                     }
                     TxqStats::MaxFlows => {
-                        txq_statistics.max_flows = Some(u32::parse(&sub_attr)?);
+                        txq_statistics.max_flows = Some(u32::parse(sub_attr)?);
                     }
                     unhandled => {
                         return Err(AttrParseError::new(
@@ -240,7 +240,7 @@ pub struct TransmitQueueStats {
     pub max_flows: Option<u32>,
 }
 
-#[derive(Debug, Copy, Clone)]
+#[derive(Debug, Copy, Clone, Default)]
 pub struct MacAddress {
     address_bytes: [u8; 6],
 }
@@ -248,14 +248,6 @@ pub struct MacAddress {
 impl MacAddress {
     pub fn as_bytes(&self) -> [u8; 6] {
         self.address_bytes
-    }
-}
-
-impl std::default::Default for MacAddress {
-    fn default() -> Self {
-        MacAddress {
-            address_bytes: [0; 6],
-        }
     }
 }
 

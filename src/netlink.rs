@@ -115,15 +115,15 @@ impl NetlinkHeaderBuilder {
     }
 }
 
-impl Into<Nlmsghdr<u16, Neli80211Header>> for NetlinkHeaderBuilder {
-    fn into(self) -> Nlmsghdr<u16, Neli80211Header> {
+impl From<NetlinkHeaderBuilder> for Nlmsghdr<u16, Neli80211Header> {
+    fn from(val: NetlinkHeaderBuilder) -> Self {
         Nlmsghdr::new(
             None,
-            self.nl_type,
-            self.flags,
+            val.nl_type,
+            val.flags,
             None,
             None,
-            self.header_builder.into(),
+            val.header_builder.into(),
         )
     }
 }
@@ -153,16 +153,16 @@ impl Nl80211HeaderBuilder {
     }
 }
 
-impl Into<Neli80211Header> for Nl80211HeaderBuilder {
-    fn into(self) -> Neli80211Header {
-        let attrs = self
+impl From<Nl80211HeaderBuilder> for Neli80211Header {
+    fn from(val: Nl80211HeaderBuilder) -> Self {
+        let attrs = val
             .attributes
             .into_iter()
             .map(|(nla_type, payload)| {
                 Nlattr::new(None, nla_type, payload).expect("Failed to serialize Nlattr")
             })
             .collect();
-        Genlmsghdr::new(self.command, NL80211_VERSION, attrs)
+        Genlmsghdr::new(val.command, NL80211_VERSION, attrs)
             .expect("Failed to create generic netlink header and payload")
     }
 }
@@ -183,7 +183,7 @@ pub(crate) trait PayloadParser<T> {
 
 impl<T: Clone + fmt::Debug> PayloadParser<T> for bool {
     fn parse(attr: &Nlattr<T, Vec<u8>>) -> Result<Self, AttrParseError> {
-        let num = u8::parse(&attr)?;
+        let num = u8::parse(attr)?;
         match num {
             0 => Ok(false),
             _ => Ok(true),
