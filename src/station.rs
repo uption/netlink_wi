@@ -87,10 +87,10 @@ impl AttributeParser<Attribute> for WirelessStation {
         for attr in handle.iter() {
             match &attr.nla_type {
                 Attribute::Ifindex => {
-                    station.interface_index = u32::parse(&attr)?;
+                    station.interface_index = u32::parse(attr)?;
                 }
-                Attribute::Mac => station.mac = MacAddress::parse(&attr)?,
-                Attribute::Generation => station.generation = u32::parse(&attr)?,
+                Attribute::Mac => station.mac = MacAddress::parse(attr)?,
+                Attribute::Generation => station.generation = u32::parse(attr)?,
                 Attribute::StaInfo => {
                     station_info_attr = Some(
                         attr.get_nested_attributes::<StationInfo>()
@@ -105,67 +105,67 @@ impl AttributeParser<Attribute> for WirelessStation {
             for sub_attr in sub_handle.iter() {
                 match &sub_attr.nla_type {
                     StationInfo::Signal => {
-                        station.signal = Some(u8::parse(&sub_attr)?);
+                        station.signal = Some(u8::parse(sub_attr)?);
                     }
                     StationInfo::SignalAvg => {
-                        station.average_signal = Some(u8::parse(&sub_attr)?);
+                        station.average_signal = Some(u8::parse(sub_attr)?);
                     }
                     StationInfo::BeaconSignalAvg => {
-                        station.beacon_average_signal = Some(u8::parse(&sub_attr)?);
+                        station.beacon_average_signal = Some(u8::parse(sub_attr)?);
                     }
                     StationInfo::ChainSignal => {
                         station.chain_signal = sub_attr.payload.to_vec();
                     }
                     StationInfo::ConnectedTime => {
                         station.connected_time =
-                            Some(Duration::from_secs(u32::parse(&sub_attr)? as u64));
+                            Some(Duration::from_secs(u32::parse(sub_attr)? as u64));
                     }
                     StationInfo::InactiveTime => {
                         station.inactive_time =
-                            Some(Duration::from_millis(u32::parse(&sub_attr)? as u64));
+                            Some(Duration::from_millis(u32::parse(sub_attr)? as u64));
                     }
                     StationInfo::AssocAtBootTime => {
                         station.associated_at_boot_time =
-                            Some(Duration::from_nanos(u64::parse(&sub_attr)?));
+                            Some(Duration::from_nanos(u64::parse(sub_attr)?));
                     }
                     StationInfo::RxBytes => {
-                        station.rx_bytes = Some(u32::parse(&sub_attr)?);
+                        station.rx_bytes = Some(u32::parse(sub_attr)?);
                     }
                     StationInfo::TxBytes => {
-                        station.tx_bytes = Some(u32::parse(&sub_attr)?);
+                        station.tx_bytes = Some(u32::parse(sub_attr)?);
                     }
                     StationInfo::RxBytes64 => {
-                        station.rx_bytes64 = Some(u64::parse(&sub_attr)?);
+                        station.rx_bytes64 = Some(u64::parse(sub_attr)?);
                     }
                     StationInfo::TxBytes64 => {
-                        station.tx_bytes64 = Some(u64::parse(&sub_attr)?);
+                        station.tx_bytes64 = Some(u64::parse(sub_attr)?);
                     }
                     StationInfo::RxDuration => {
-                        station.rx_duration = Some(Duration::from_millis(u64::parse(&sub_attr)?));
+                        station.rx_duration = Some(Duration::from_millis(u64::parse(sub_attr)?));
                     }
                     StationInfo::TxDuration => {
-                        station.tx_duration = Some(Duration::from_millis(u64::parse(&sub_attr)?));
+                        station.tx_duration = Some(Duration::from_millis(u64::parse(sub_attr)?));
                     }
                     StationInfo::RxPackets => {
-                        station.rx_packets = Some(u32::parse(&sub_attr)?);
+                        station.rx_packets = Some(u32::parse(sub_attr)?);
                     }
                     StationInfo::TxPackets => {
-                        station.tx_packets = Some(u32::parse(&sub_attr)?);
+                        station.tx_packets = Some(u32::parse(sub_attr)?);
                     }
                     StationInfo::TxRetries => {
-                        station.tx_retries = Some(u32::parse(&sub_attr)?);
+                        station.tx_retries = Some(u32::parse(sub_attr)?);
                     }
                     StationInfo::TxFailed => {
-                        station.tx_failed = Some(u32::parse(&sub_attr)?);
+                        station.tx_failed = Some(u32::parse(sub_attr)?);
                     }
                     StationInfo::BeaconLoss => {
-                        station.beacon_loss = Some(u32::parse(&sub_attr)?);
+                        station.beacon_loss = Some(u32::parse(sub_attr)?);
                     }
                     StationInfo::RxDropMisc => {
-                        station.rx_drop_misc = Some(u64::parse(&sub_attr)?);
+                        station.rx_drop_misc = Some(u64::parse(sub_attr)?);
                     }
                     StationInfo::BeaconRx => {
-                        station.beacon_rx = Some(u64::parse(&sub_attr)?);
+                        station.beacon_rx = Some(u64::parse(sub_attr)?);
                     }
                     StationInfo::StaFlags => (), // TODO: Get station flags
                     StationInfo::RxBitrate => {
@@ -211,16 +211,16 @@ impl AttributeParser<Attribute> for WirelessStation {
                         let mut tid_stats = TrafficIdStats::new(sub_attr.nla_type as u8);
                         match &tid_attr.nla_type {
                             TidStats::RxMsdu => {
-                                tid_stats.rx_msdu = Some(u64::parse(&tid_attr)?);
+                                tid_stats.rx_msdu = Some(u64::parse(tid_attr)?);
                             }
                             TidStats::TxMsdu => {
-                                tid_stats.tx_msdu = Some(u64::parse(&tid_attr)?);
+                                tid_stats.tx_msdu = Some(u64::parse(tid_attr)?);
                             }
                             TidStats::TxMsduRetries => {
-                                tid_stats.tx_msdu_retries = Some(u64::parse(&tid_attr)?);
+                                tid_stats.tx_msdu_retries = Some(u64::parse(tid_attr)?);
                             }
                             TidStats::TxMsduFailed => {
-                                tid_stats.tx_msdu_failed = Some(u64::parse(&tid_attr)?);
+                                tid_stats.tx_msdu_failed = Some(u64::parse(tid_attr)?);
                             }
                             TidStats::Pad => (), // Attribute used for padding for 64-bit alignment.
                             TidStats::TxqStats => (), // TODO: Get txq stats.
@@ -251,10 +251,10 @@ impl AttributeParser<Attribute> for WirelessStation {
                             station.bss_short_slot_time = Some(true);
                         }
                         BssParam::DtimPeriod => {
-                            station.bss_dtim_period = Some(u8::parse(&sub_attr)?);
+                            station.bss_dtim_period = Some(u8::parse(sub_attr)?);
                         }
                         BssParam::BeaconInterval => {
-                            station.bss_beacon_interval = Some(u16::parse(&sub_attr)?);
+                            station.bss_beacon_interval = Some(u16::parse(sub_attr)?);
                         }
                         unhandled => {
                             return Err(AttrParseError::new(
@@ -335,12 +335,12 @@ impl AttributeParser<NlRateInfo> for RateInfo {
             match &attr.nla_type {
                 NlRateInfo::Bitrate => {
                     if bitrate_info.bitrate == 0 {
-                        bitrate_info.bitrate = u16::parse(&attr)? as u32;
+                        bitrate_info.bitrate = u16::parse(attr)? as u32;
                     }
                 }
                 NlRateInfo::Mcs => {
                     bitrate_info.connection_type = ConnectionType::HT;
-                    bitrate_info.mcs = u8::parse(&attr)?;
+                    bitrate_info.mcs = u8::parse(attr)?;
                     if bitrate_info.mcs < 8 {
                         bitrate_info.stream_count = 1;
                     } else if bitrate_info.mcs < 16 {
@@ -358,14 +358,14 @@ impl AttributeParser<NlRateInfo> for RateInfo {
                     bitrate_info.guard_interval = GuardIntervals::Usec0_4;
                 }
                 NlRateInfo::Bitrate32 => {
-                    bitrate_info.bitrate = u32::parse(&attr)?;
+                    bitrate_info.bitrate = u32::parse(attr)?;
                 }
                 NlRateInfo::VhtMcs => {
-                    bitrate_info.mcs = u8::parse(&attr)?;
+                    bitrate_info.mcs = u8::parse(attr)?;
                     bitrate_info.connection_type = ConnectionType::VHT;
                 }
                 NlRateInfo::VhtNss => {
-                    bitrate_info.stream_count = u8::parse(&attr)?;
+                    bitrate_info.stream_count = u8::parse(attr)?;
                 }
                 NlRateInfo::MhzWidth80 => {
                     bitrate_info.channel_width = ChannelWidth::Width80;
@@ -383,11 +383,11 @@ impl AttributeParser<NlRateInfo> for RateInfo {
                     bitrate_info.channel_width = ChannelWidth::Width5;
                 }
                 NlRateInfo::HeMcs => {
-                    bitrate_info.mcs = u8::parse(&attr)?;
+                    bitrate_info.mcs = u8::parse(attr)?;
                     bitrate_info.connection_type = ConnectionType::HE;
                 }
                 NlRateInfo::HeNss => {
-                    bitrate_info.stream_count = u8::parse(&attr)?;
+                    bitrate_info.stream_count = u8::parse(attr)?;
                 }
                 NlRateInfo::HeGuardInterval => {
                     let payload = handle
@@ -406,7 +406,7 @@ impl AttributeParser<NlRateInfo> for RateInfo {
                     }
                 }
                 NlRateInfo::HeDcm => {
-                    bitrate_info.dcm_value = Some(u8::parse(&attr)?);
+                    bitrate_info.dcm_value = Some(u8::parse(attr)?);
                 }
                 NlRateInfo::HeRuAlloc => {
                     let payload = handle
