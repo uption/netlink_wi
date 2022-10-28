@@ -1,14 +1,13 @@
-use std::convert::TryInto;
+use std::convert::TryFrom;
 use std::fmt;
 
-use neli::nlattr::AttrHandle;
-use neli::nlattr::Nlattr;
+use neli::attr::Attribute as NeliAttribute;
+use neli::err::DeError;
+use neli::FromBytes;
 
 use super::attributes::InterfaceType as NlInterfaceType;
 use super::attributes::{Attribute, TxqStats};
-use super::error::AttrParseError;
-use super::netlink::AttributeParser;
-use super::netlink::PayloadParser;
+use crate::attributes::Attrs;
 
 #[derive(Debug, Clone, Default)]
 /// Interface information returned from netlink.
@@ -48,77 +47,68 @@ pub struct WirelessInterface {
     pub txq_statistics: Option<TransmitQueueStats>,
 }
 
-impl AttributeParser<Attribute> for WirelessInterface {
-    fn parse(handle: AttrHandle<Attribute>) -> Result<Self, AttrParseError> {
-        let mut interface = WirelessInterface::default();
+impl TryFrom<Attrs<'_, Attribute>> for WirelessInterface {
+    type Error = DeError;
+
+    fn try_from(handle: Attrs<'_, Attribute>) -> Result<Self, Self::Error> {
+        let mut interface = Self::default();
         let mut interface_type_payload: Option<NlInterfaceType> = None;
-        let mut txq_stats_attr: Option<AttrHandle<'_, TxqStats>> = None;
+        let mut txq_stats_attr: Option<Attrs<'_, TxqStats>> = None;
         for attr in handle.iter() {
-            match &attr.nla_type {
-                Attribute::Wiphy => {
-                    interface.wiphy_index = u32::parse(attr)?;
-                }
+            match attr.nla_type.nla_type {
+                Attribute::Wiphy => interface.wiphy_index = attr.get_payload_as()?,
                 Attribute::Ifindex => {
-                    interface.interface_index = u32::parse(attr)?;
+                    interface.interface_index = attr.get_payload_as()?;
                 }
-                Attribute::Ifname => {
-                    interface.name = String::from_utf8_lossy(&attr.payload)
-                        .trim_matches('\0')
-                        .to_string();
+                Attribute::Ifname => interface.name = attr.get_payload_as_with_len()?,
+                Attribute::Mac => {
+                    interface.mac = attr.get_payload_as()?;
                 }
-                Attribute::Mac => interface.mac = MacAddress::parse(attr)?,
-                Attribute::Generation => interface.generation = u32::parse(attr)?,
+                Attribute::Generation => interface.generation = attr.get_payload_as()?,
                 Attribute::Ssid => {
-                    interface.ssid = Some(String::from_utf8_lossy(&attr.payload).to_string());
+                    interface.ssid = Some(String::from_utf8_lossy(attr.payload().as_ref()).into());
                 }
                 Attribute::WiphyFreq => {
-                    interface.frequency = Some(u32::parse(attr)?);
+                    interface.frequency = Some(attr.get_payload_as()?);
                 }
                 Attribute::WiphyChannelType => (), // Attribute is deprecated.
                 Attribute::WiphyFreqOffset => {
-                    interface.frequency_offset = Some(u32::parse(attr)?);
+                    interface.frequency_offset = Some(attr.get_payload_as()?);
                 }
                 Attribute::CenterFreq1 => {
-                    interface.center_frequency1 = Some(u32::parse(attr)?);
+                    interface.center_frequency1 = Some(attr.get_payload_as()?);
                 }
                 Attribute::CenterFreq2 => {
-                    interface.center_frequency2 = Some(u32::parse(attr)?);
+                    interface.center_frequency2 = Some(attr.get_payload_as()?);
                 }
                 Attribute::ChannelWidth => {
-                    let attr_channel_width = u32::parse(attr)?;
+                    let attr_channel_width: u32 = attr.get_payload_as()?;
                     interface.channel_width = Some(attr_channel_width.into());
                 }
                 Attribute::WiphyTxPowerLevel => {
-                    interface.tx_power = Some(u32::parse(attr)?);
+                    interface.tx_power = Some(attr.get_payload_as()?);
                 }
                 Attribute::Wdev => {
-                    interface.wdev = Some(u64::parse(attr)?);
+                    interface.wdev = Some(attr.get_payload_as()?);
                 }
                 Attribute::Use4addrFrames => {
-                    interface.use_4address_frames = Some(bool::parse(attr)?);
+                    let use_4address_frames: u8 = attr.get_payload_as()?;
+                    interface.use_4address_frames = Some(use_4address_frames != 0);
                 }
                 Attribute::Iftype => {
-                    interface_type_payload = Some(
-                        handle
-                            .get_attr_payload_as::<NlInterfaceType>(Attribute::Iftype)
-                            .map_err(|err| {
-                                AttrParseError::new(err.to_string(), Attribute::Iftype)
-                            })?,
-                    );
+                    interface_type_payload =
+                        Some(handle.get_attr_payload_as::<NlInterfaceType>(Attribute::Iftype)?);
                 }
                 Attribute::TxqStats => {
-                    txq_stats_attr = Some(
-                        attr.get_nested_attributes::<TxqStats>()
-                            .map_err(|err| AttrParseError::new(err, Attribute::TxqStats))?,
-                    );
+                    txq_stats_attr = Some(attr.get_attr_handle()?);
                 }
                 unhandled => {
-                    println!("Unhandled wireless interface attribute {:?}", unhandled);
+                    println!("Unhandled wireless interface attribute {unhandled:?}");
                 }
             }
         }
         if let Some(payload) = interface_type_payload {
-            match &payload {
+            match payload {
                 NlInterfaceType::Unspecified => {
                     interface.interface_type = Some(InterfaceType::Unspecified);
                 }
@@ -166,46 +156,41 @@ impl AttributeParser<Attribute> for WirelessInterface {
         if let Some(sub_handle) = txq_stats_attr {
             let mut txq_statistics = TransmitQueueStats::default();
             for sub_attr in sub_handle.iter() {
-                match &sub_attr.nla_type {
+                match sub_attr.nla_type.nla_type {
                     TxqStats::BacklogBytes => {
-                        txq_statistics.backlog_bytes = Some(u32::parse(sub_attr)?);
+                        txq_statistics.backlog_bytes = Some(sub_attr.get_payload_as()?);
                     }
                     TxqStats::BacklogPackets => {
-                        txq_statistics.backlog_packets = Some(u32::parse(sub_attr)?);
+                        txq_statistics.backlog_packets = Some(sub_attr.get_payload_as()?);
                     }
                     TxqStats::Flows => {
-                        txq_statistics.flows = Some(u32::parse(sub_attr)?);
+                        txq_statistics.flows = Some(sub_attr.get_payload_as()?);
                     }
                     TxqStats::Drops => {
-                        txq_statistics.drops = Some(u32::parse(sub_attr)?);
+                        txq_statistics.drops = Some(sub_attr.get_payload_as()?);
                     }
                     TxqStats::EcnMarks => {
-                        txq_statistics.ecn_marks = Some(u32::parse(sub_attr)?);
+                        txq_statistics.ecn_marks = Some(sub_attr.get_payload_as()?);
                     }
                     TxqStats::Overlimit => {
-                        txq_statistics.overlimit = Some(u32::parse(sub_attr)?);
+                        txq_statistics.overlimit = Some(sub_attr.get_payload_as()?);
                     }
                     TxqStats::Overmemory => {
-                        txq_statistics.overmemory = Some(u32::parse(sub_attr)?);
+                        txq_statistics.overmemory = Some(sub_attr.get_payload_as()?);
                     }
                     TxqStats::Collisions => {
-                        txq_statistics.collisions = Some(u32::parse(sub_attr)?);
+                        txq_statistics.collisions = Some(sub_attr.get_payload_as()?);
                     }
                     TxqStats::TxBytes => {
-                        txq_statistics.tx_bytes = Some(u32::parse(sub_attr)?);
+                        txq_statistics.tx_bytes = Some(sub_attr.get_payload_as()?);
                     }
                     TxqStats::TxPackets => {
-                        txq_statistics.tx_packets = Some(u32::parse(sub_attr)?);
+                        txq_statistics.tx_packets = Some(sub_attr.get_payload_as()?);
                     }
                     TxqStats::MaxFlows => {
-                        txq_statistics.max_flows = Some(u32::parse(sub_attr)?);
+                        txq_statistics.max_flows = Some(sub_attr.get_payload_as()?);
                     }
-                    unhandled => {
-                        return Err(AttrParseError::new(
-                            "Unhandled txq statistics attribute",
-                            unhandled,
-                        ));
-                    }
+                    unhandled => println!("Unhandled txq statistics attribute {:?}", unhandled),
                 }
             }
             interface.txq_statistics = Some(txq_statistics);
@@ -263,15 +248,14 @@ impl fmt::Display for MacAddress {
     }
 }
 
-impl PayloadParser<Attribute> for MacAddress {
-    fn parse(attr: &Nlattr<Attribute, Vec<u8>>) -> Result<Self, AttrParseError> {
-        let payload: &[u8] = &attr.payload;
-        let payload = payload
+impl<'a> FromBytes<'a> for MacAddress {
+    fn from_bytes(buffer: &mut std::io::Cursor<&'a [u8]>) -> Result<Self, DeError> {
+        let address_bytes = buffer
+            .clone()
+            .into_inner()
             .try_into()
-            .map_err(|e| AttrParseError::new(e, attr.nla_type.clone()))?;
-        Ok(MacAddress {
-            address_bytes: payload,
-        })
+            .map_err(|_| DeError::new("Failed to deserialize MAC-address"))?;
+        Ok(MacAddress { address_bytes })
     }
 }
 
