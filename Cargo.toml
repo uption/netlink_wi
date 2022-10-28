@@ -5,7 +5,7 @@ authors = [
     "Olli Paakkunainen <olli@paakkunainen.fi>",
     "Adarsh Krishnan <adarshk7@gmail.com>",
 ]
-edition = "2018"
+edition = "2021"
 description = """
 A library and command-line utility to retrieve information about wireless interfaces
 in Linux operating system using netlink protocol.
@@ -22,4 +22,5 @@ name = "netlink_wi"
 path = "src/lib.rs"
 
 [dependencies]
-neli = "0.4.4"
+neli = "0.6.3"
+neli-proc-macros = "0.1.3"

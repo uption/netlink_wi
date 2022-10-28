@@ -1,11 +1,8 @@
-use neli::nlattr::AttrHandle;
-
-use crate::attributes::WiphyBands;
+use neli::attr::Attribute as NeliAttribute;
+use neli::err::DeError;
 
 use super::attributes::Attribute;
-use super::error::AttrParseError;
-use super::netlink::AttributeParser;
-use super::netlink::PayloadParser;
+use crate::attributes::{Attrs, WiphyBands};
 
 #[derive(Debug, Clone, Default)]
 /// Physical wireless device information returned from netlink.
@@ -19,27 +16,20 @@ pub struct PhysicalDevice {
     pub generation: u32,
 }
 
-impl AttributeParser<Attribute> for PhysicalDevice {
-    fn parse(handle: AttrHandle<Attribute>) -> Result<Self, AttrParseError> {
+impl TryFrom<Attrs<'_, Attribute>> for PhysicalDevice {
+    type Error = DeError;
+
+    fn try_from(handle: Attrs<'_, Attribute>) -> Result<Self, Self::Error> {
         let mut device = PhysicalDevice::default();
-        let mut wiphy_bands_attr: Option<AttrHandle<'_, WiphyBands>> = None;
+        let mut wiphy_bands_attr: Option<Attrs<'_, WiphyBands>> = None;
 
         for attr in handle.iter() {
-            match &attr.nla_type {
-                Attribute::Wiphy => {
-                    device.wiphy_index = u32::parse(attr)?;
-                }
-                Attribute::WiphyName => {
-                    device.name = String::from_utf8_lossy(&attr.payload)
-                        .trim_matches('\0')
-                        .to_string();
-                }
-                Attribute::Generation => device.generation = u32::parse(attr)?,
+            match attr.nla_type.nla_type {
+                Attribute::Wiphy => device.wiphy_index = attr.get_payload_as()?,
+                Attribute::WiphyName => device.name = attr.get_payload_as_with_len()?,
+                Attribute::Generation => device.generation = attr.get_payload_as()?,
                 Attribute::WiphyBands => {
-                    wiphy_bands_attr = Some(
-                        attr.get_nested_attributes::<WiphyBands>()
-                            .map_err(|err| AttrParseError::new(err, Attribute::WiphyBands))?,
-                    );
+                    wiphy_bands_attr = Some(attr.get_attr_handle()?);
                 }
                 Attribute::WiphyRetryShort
                 | Attribute::WiphyRetryLong
@@ -76,7 +66,7 @@ impl AttributeParser<Attribute> for PhysicalDevice {
         }
         if let Some(sub_handle) = wiphy_bands_attr {
             for sub_attr in sub_handle.iter() {
-                match &sub_attr.nla_type {
+                match sub_attr.nla_type.nla_type {
                     WiphyBands::Invalid => (),
                     unhandled => println!("Unhandled wiphy band 'Attribute::{:?}'", &unhandled),
                 }

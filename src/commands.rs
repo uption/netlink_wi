@@ -1,238 +1,244 @@
-use neli::consts::Cmd;
-use neli::{impl_var, impl_var_base, impl_var_trait};
+use neli::consts::genl::Cmd;
+use neli_proc_macros::neli_enum;
+
+/// Supported nl80211 commands.
+///
+/// nl80211_commands enum from https://github.com/torvalds/linux/blob/master/include/uapi/linux/nl80211.h
+#[neli_enum(serialized_type = "u8")]
+pub enum Command {
+    Unspec = 0,
+
+    /// Request information about a wiphy (physical wireless device) or dump
+    /// request to get a list of all present wiphys.
+    GetWiphy = 1,
+    SetWiphy = 2,
+    NewWiphy = 3,
+    DelWiphy = 4,
+
+    /// Request an interface's configuration. Either a dump request for all
+    /// interfaces or a specific get with a single NL80211_ATTR_IFINDEX is supported.
+    GetInterface = 5,
+    SetInterface = 6,
+    NewInterface = 7,
+    DelInterface = 8,
 
-impl_var_trait!(
-    /// Supported nl80211 commands.
-    ///
-    /// nl80211_commands enum from https://github.com/torvalds/linux/blob/master/include/uapi/linux/nl80211.h
-    Command, u8, Cmd,
+    GetKey = 9,
+    SetKey = 10,
+    NewKey = 11,
+    DelKey = 12,
 
-    Unspec => 0,
+    GetBeacon = 13,
+    SetBeacon = 14,
+    StartAp = 15,
+    /// = StartAp
+    NewBeacon = 15,
+    StopAp = 16,
+    /// = StopAp
+    DelBeacon = 16,
 
-    // Request information about a wiphy (physical wireless device) or dump
-    // request to get a list of all present wiphys.
-    GetWiphy => 1,
-    SetWiphy => 2,
-    NewWiphy => 3,
-    DelWiphy => 4,
+    GetStation = 17,
+    SetStation = 18,
+    NewStation = 19,
+    DelStation = 20,
 
-    // Request an interface's configuration. Either a dump request for all
-    // interfaces or a specific get with a single NL80211_ATTR_IFINDEX is supported.
-    GetInterface => 5,
-    SetInterface => 6,
-    NewInterface => 7,
-    DelInterface => 8,
+    GetMpath = 21,
+    SetMpath = 22,
+    NewMpath = 23,
+    DelMpath = 24,
 
-    GetKey => 9,
-    SetKey => 10,
-    NewKey => 11,
-    DelKey => 12,
+    SetBss = 25,
 
-    GetBeacon => 13,
-    SetBeacon => 14,
-    StartAp => 15,
-    NewBeacon => 15, // => StartAp
-    StopAp => 16,
-    DelBeacon => 16,  // => StopAp
+    SetReg = 26,
+    ReqSetReg = 27,
 
-    GetStation => 17,
-    SetStation => 18,
-    NewStation => 19,
-    DelStation => 20,
+    GetMeshConfig = 28,
+    SetMeshConfig = 29,
+    /// reserved; not used
+    SetMgmtExtraIe = 30,
 
-    GetMpath => 21,
-    SetMpath => 22,
-    NewMpath => 23,
-    DelMpath => 24,
+    GetReg = 31,
 
-    SetBss => 25,
+    GetScan = 32,
+    TriggerScan = 33,
+    NewScanResults = 34,
+    ScanAborted = 35,
 
-    SetReg => 26,
-    ReqSetReg => 27,
+    RegChange = 36,
 
-    GetMeshConfig => 28,
-    SetMeshConfig => 29,
+    Authenticate = 37,
+    Associate = 38,
+    Deauthenticate = 39,
+    Disassociate = 40,
 
-    SetMgmtExtraIe => 30, // reserved; not used
+    MichaelMicFailure = 41,
 
-    GetReg => 31,
+    RegBeaconHint = 42,
 
-    GetScan => 32,
-    TriggerScan => 33,
-    NewScanResults => 34,
-    ScanAborted => 35,
+    JoinIbss = 43,
+    LeaveIbss = 44,
 
-    RegChange => 36,
+    Testmode = 45,
 
-    Authenticate => 37,
-    Associate => 38,
-    Deauthenticate => 39,
-    Disassociate => 40,
+    Connect = 46,
+    Roam = 47,
+    Disconnect = 48,
 
-    MichaelMicFailure => 41,
+    SetWiphyNetns = 49,
 
-    RegBeaconHint => 42,
+    GetSurvey = 50,
+    NewSurveyResults = 51,
 
-    JoinIbss => 43,
-    LeaveIbss => 44,
+    SetPmksa = 52,
+    DelPmksa = 53,
+    FlushPmksa = 54,
 
-    Testmode => 45,
+    RemainOnChannel = 55,
+    CancelRemainOnChannel = 56,
 
-    Connect => 46,
-    Roam => 47,
-    Disconnect => 48,
+    SetTxBitrateMask = 57,
 
-    SetWiphyNetns => 49,
+    RegisterFrame = 58,
+    /// = RegisterFrame
+    RegisterAction = 58,
+    Frame = 59,
+    /// = Frame,
+    Action = 59,
+    FrameTxStatus = 60,
+    /// = FrameTxStatus,
+    ActionTxStatus = 60,
 
-    GetSurvey => 50,
-    NewSurveyResults => 51,
+    SetPowerSave = 61,
+    GetPowerSave = 62,
 
-    SetPmksa => 52,
-    DelPmksa => 53,
-    FlushPmksa => 54,
+    SetCqm = 63,
+    NotifyCqm = 64,
 
-    RemainOnChannel => 55,
-    CancelRemainOnChannel => 56,
+    SetChannel = 65,
+    SetWdsPeer = 66,
 
-    SetTxBitrateMask => 57,
+    FrameWaitCancel = 67,
 
-    RegisterFrame => 58,
-    RegisterAction => 58, // => RegisterFrame,
-    Frame => 59,
-    Action => 59, // => Frame,
-    FrameTxStatus => 60,
-    ActionTxStatus => 60, // => FrameTxStatus,
+    JoinMesh = 68,
+    LeaveMesh = 69,
 
-    SetPowerSave => 61,
-    GetPowerSave => 62,
+    UnprotDeauthenticate = 70,
+    UnprotDisassociate = 71,
 
-    SetCqm => 63,
-    NotifyCqm => 64,
+    NewPeerCandidate = 72,
 
-    SetChannel => 65,
-    SetWdsPeer => 66,
+    GetWowlan = 73,
+    SetWowlan = 74,
 
-    FrameWaitCancel => 67,
+    StartSchedScan = 75,
+    StopSchedScan = 76,
+    SchedScanResults = 77,
+    SchedScanStopped = 78,
 
-    JoinMesh => 68,
-    LeaveMesh => 69,
+    SetRekeyOffload = 79,
 
-    UnprotDeauthenticate => 70,
-    UnprotDisassociate => 71,
+    PmksaCandidate = 80,
 
-    NewPeerCandidate => 72,
+    TdlsOper = 81,
+    TdlsMgmt = 82,
 
-    GetWowlan => 73,
-    SetWowlan => 74,
+    UnexpectedFrame = 83,
 
-    StartSchedScan => 75,
-    StopSchedScan => 76,
-    SchedScanResults => 77,
-    SchedScanStopped => 78,
+    ProbeClient = 84,
 
-    SetRekeyOffload => 79,
+    RegisterBeacons = 85,
 
-    PmksaCandidate => 80,
+    Unexpected4addrFrame = 86,
 
-    TdlsOper => 81,
-    TdlsMgmt => 82,
+    SetNoackMap = 87,
 
-    UnexpectedFrame => 83,
+    ChSwitchNotify = 88,
 
-    ProbeClient => 84,
+    StartP2pDevice = 89,
+    StopP2pDevice = 90,
 
-    RegisterBeacons => 85,
+    ConnFailed = 91,
 
-    Unexpected4addrFrame => 86,
+    SetMcastRate = 92,
 
-    SetNoackMap => 87,
+    SetMacAcl = 93,
 
-    ChSwitchNotify => 88,
+    RadarDetect = 94,
 
-    StartP2pDevice => 89,
-    StopP2pDevice => 90,
+    GetProtocolFeatures = 95,
 
-    ConnFailed => 91,
+    UpdateFtIes = 96,
+    FtEvent = 97,
 
-    SetMcastRate => 92,
+    CritProtocolStart = 98,
+    CritProtocolStop = 99,
 
-    SetMacAcl => 93,
+    GetCoalesce = 100,
+    SetCoalesce = 101,
 
-    RadarDetect => 94,
+    ChannelSwitch = 102,
 
-    GetProtocolFeatures => 95,
+    Vendor = 103,
 
-    UpdateFtIes => 96,
-    FtEvent => 97,
+    SetQosMap = 104,
 
-    CritProtocolStart => 98,
-    CritProtocolStop => 99,
+    AddTxTs = 105,
+    DelTxTs = 106,
 
-    GetCoalesce => 100,
-    SetCoalesce => 101,
+    GetMpp = 107,
 
-    ChannelSwitch => 102,
+    JoinOcb = 108,
+    LeaveOcb = 109,
 
-    Vendor => 103,
+    ChSwitchStartedNotify = 110,
 
-    SetQosMap => 104,
+    TdlsChannelSwitch = 111,
+    TdlsCancelChannelSwitch = 112,
 
-    AddTxTs => 105,
-    DelTxTs => 106,
+    WiphyRegChange = 113,
 
-    GetMpp => 107,
+    AbortScan = 114,
 
-    JoinOcb => 108,
-    LeaveOcb => 109,
+    StartNan = 115,
+    StopNan = 116,
+    AddNanFunction = 117,
+    DelNanFunction = 118,
+    ChangeNanConfig = 119,
+    NanMatch = 120,
 
-    ChSwitchStartedNotify => 110,
+    SetMulticastToUnicast = 121,
 
-    TdlsChannelSwitch => 111,
-    TdlsCancelChannelSwitch => 112,
+    UpdateConnectParams = 122,
 
-    WiphyRegChange => 113,
+    SetPmk = 123,
+    DelPmk = 124,
 
-    AbortScan => 114,
+    PortAuthorized = 125,
 
-    StartNan => 115,
-    StopNan => 116,
-    AddNanFunction => 117,
-    DelNanFunction => 118,
-    ChangeNanConfig => 119,
-    NanMatch => 120,
+    ReloadRegdb = 126,
 
-    SetMulticastToUnicast => 121,
+    ExternalAuth = 127,
 
-    UpdateConnectParams => 122,
+    StaOpmodeChanged = 128,
 
-    SetPmk => 123,
-    DelPmk => 124,
+    ControlPortFrame = 129,
 
-    PortAuthorized => 125,
+    GetFtmResponderStats = 130,
 
-    ReloadRegdb => 126,
+    PeerMeasurementStart = 131,
+    PeerMeasurementResult = 132,
+    PeerMeasurementComplete = 133,
 
-    ExternalAuth => 127,
+    NotifyRadar = 134,
 
-    StaOpmodeChanged => 128,
+    UpdateOweInfo = 135,
 
-    ControlPortFrame => 129,
+    ProbeMeshLink = 136,
 
-    GetFtmResponderStats => 130,
+    SetTidConfig = 137,
 
-    PeerMeasurementStart => 131,
-    PeerMeasurementResult => 132,
-    PeerMeasurementComplete => 133,
+    UnprotBeacon = 138,
 
-    NotifyRadar => 134,
+    ControlPortFrameTxStatus = 139,
+}
 
-    UpdateOweInfo => 135,
-
-    ProbeMeshLink => 136,
-
-    SetTidConfig => 137,
-
-    UnprotBeacon => 138,
-
-    ControlPortFrameTxStatus => 139
-);
+impl Cmd for Command {}

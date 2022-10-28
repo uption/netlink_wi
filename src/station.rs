@@ -1,14 +1,14 @@
-use neli::nlattr::AttrHandle;
 use std::fmt;
 use std::time::Duration;
+
+use neli::attr::Attribute as NeliAttribute;
+use neli::err::DeError;
 
 use super::attributes::{
     Attribute, BssParam, HeGuardInterval, HeRuAlloc, RateInfo as NlRateInfo, StationInfo, TidStats,
 };
-use super::error::AttrParseError;
 use super::interface::{ChannelWidth, MacAddress, TransmitQueueStats};
-use super::netlink::AttributeParser;
-use super::netlink::PayloadParser;
+use crate::attributes::Attrs;
 
 #[derive(Debug, Clone, Default)]
 /// Station information returned from netlink.
@@ -78,24 +78,21 @@ pub struct WirelessStation {
     pub tx_bitrate: Option<RateInfo>,
 }
 
-impl AttributeParser<Attribute> for WirelessStation {
-    fn parse(handle: AttrHandle<Attribute>) -> Result<Self, AttrParseError> {
+impl TryFrom<Attrs<'_, Attribute>> for WirelessStation {
+    type Error = DeError;
+
+    fn try_from(handle: Attrs<'_, Attribute>) -> Result<Self, Self::Error> {
         let mut station = WirelessStation::default();
-        let mut station_info_attr: Option<AttrHandle<'_, StationInfo>> = None;
-        let mut tid_stats_attr: Option<AttrHandle<'_, u16>> = None;
-        let mut bss_param_attr: Option<AttrHandle<'_, BssParam>> = None;
+        let mut station_info_attr: Option<Attrs<'_, StationInfo>> = None;
+        let mut tid_stats_attr: Option<Attrs<'_, u16>> = None;
+        let mut bss_param_attr: Option<Attrs<'_, BssParam>> = None;
         for attr in handle.iter() {
-            match &attr.nla_type {
-                Attribute::Ifindex => {
-                    station.interface_index = u32::parse(attr)?;
-                }
-                Attribute::Mac => station.mac = MacAddress::parse(attr)?,
-                Attribute::Generation => station.generation = u32::parse(attr)?,
+            match attr.nla_type.nla_type {
+                Attribute::Ifindex => station.interface_index = attr.get_payload_as()?,
+                Attribute::Mac => station.mac = attr.get_payload_as()?,
+                Attribute::Generation => station.generation = attr.get_payload_as()?,
                 Attribute::StaInfo => {
-                    station_info_attr = Some(
-                        attr.get_nested_attributes::<StationInfo>()
-                            .map_err(|err| AttrParseError::new(err, Attribute::StaInfo))?,
-                    );
+                    station_info_attr = Some(attr.get_attr_handle()?);
                 }
                 unhandled => println!("Unhandled station attribute 'Attribute::{:?}'", &unhandled),
             }
@@ -103,96 +100,86 @@ impl AttributeParser<Attribute> for WirelessStation {
 
         if let Some(sub_handle) = station_info_attr {
             for sub_attr in sub_handle.iter() {
-                match &sub_attr.nla_type {
+                match sub_attr.nla_type.nla_type {
                     StationInfo::Signal => {
-                        station.signal = Some(u8::parse(sub_attr)?);
+                        station.signal = Some(sub_attr.get_payload_as()?);
                     }
                     StationInfo::SignalAvg => {
-                        station.average_signal = Some(u8::parse(sub_attr)?);
+                        station.average_signal = Some(sub_attr.get_payload_as()?);
                     }
                     StationInfo::BeaconSignalAvg => {
-                        station.beacon_average_signal = Some(u8::parse(sub_attr)?);
+                        station.beacon_average_signal = Some(sub_attr.get_payload_as()?);
                     }
                     StationInfo::ChainSignal => {
-                        station.chain_signal = sub_attr.payload.to_vec();
+                        station.chain_signal = sub_attr.payload().as_ref().to_vec();
                     }
                     StationInfo::ConnectedTime => {
-                        station.connected_time =
-                            Some(Duration::from_secs(u32::parse(sub_attr)? as u64));
+                        let secs: u32 = sub_attr.get_payload_as()?;
+                        station.connected_time = Some(Duration::from_secs(secs as u64));
                     }
                     StationInfo::InactiveTime => {
-                        station.inactive_time =
-                            Some(Duration::from_millis(u32::parse(sub_attr)? as u64));
+                        let millis: u32 = sub_attr.get_payload_as()?;
+                        station.inactive_time = Some(Duration::from_millis(millis as u64));
                     }
                     StationInfo::AssocAtBootTime => {
-                        station.associated_at_boot_time =
-                            Some(Duration::from_nanos(u64::parse(sub_attr)?));
+                        let millis: u64 = sub_attr.get_payload_as()?;
+                        station.associated_at_boot_time = Some(Duration::from_nanos(millis));
                     }
                     StationInfo::RxBytes => {
-                        station.rx_bytes = Some(u32::parse(sub_attr)?);
+                        station.rx_bytes = Some(sub_attr.get_payload_as()?);
                     }
                     StationInfo::TxBytes => {
-                        station.tx_bytes = Some(u32::parse(sub_attr)?);
+                        station.tx_bytes = Some(sub_attr.get_payload_as()?);
                     }
                     StationInfo::RxBytes64 => {
-                        station.rx_bytes64 = Some(u64::parse(sub_attr)?);
+                        station.rx_bytes64 = Some(sub_attr.get_payload_as()?);
                     }
                     StationInfo::TxBytes64 => {
-                        station.tx_bytes64 = Some(u64::parse(sub_attr)?);
+                        station.tx_bytes64 = Some(sub_attr.get_payload_as()?);
                     }
                     StationInfo::RxDuration => {
-                        station.rx_duration = Some(Duration::from_millis(u64::parse(sub_attr)?));
+                        let millis: u64 = sub_attr.get_payload_as()?;
+                        station.rx_duration = Some(Duration::from_millis(millis));
                     }
                     StationInfo::TxDuration => {
-                        station.tx_duration = Some(Duration::from_millis(u64::parse(sub_attr)?));
+                        let millis: u64 = sub_attr.get_payload_as()?;
+                        station.tx_duration = Some(Duration::from_millis(millis));
                     }
                     StationInfo::RxPackets => {
-                        station.rx_packets = Some(u32::parse(sub_attr)?);
+                        station.rx_packets = Some(sub_attr.get_payload_as()?);
                     }
                     StationInfo::TxPackets => {
-                        station.tx_packets = Some(u32::parse(sub_attr)?);
+                        station.tx_packets = Some(sub_attr.get_payload_as()?);
                     }
                     StationInfo::TxRetries => {
-                        station.tx_retries = Some(u32::parse(sub_attr)?);
+                        station.tx_retries = Some(sub_attr.get_payload_as()?);
                     }
                     StationInfo::TxFailed => {
-                        station.tx_failed = Some(u32::parse(sub_attr)?);
+                        station.tx_failed = Some(sub_attr.get_payload_as()?);
                     }
                     StationInfo::BeaconLoss => {
-                        station.beacon_loss = Some(u32::parse(sub_attr)?);
+                        station.beacon_loss = Some(sub_attr.get_payload_as()?);
                     }
                     StationInfo::RxDropMisc => {
-                        station.rx_drop_misc = Some(u64::parse(sub_attr)?);
+                        station.rx_drop_misc = Some(sub_attr.get_payload_as()?);
                     }
                     StationInfo::BeaconRx => {
-                        station.beacon_rx = Some(u64::parse(sub_attr)?);
+                        station.beacon_rx = Some(sub_attr.get_payload_as()?);
                     }
                     StationInfo::StaFlags => (), // TODO: Get station flags
                     StationInfo::RxBitrate => {
-                        let sub_handle = sub_attr
-                            .get_nested_attributes::<NlRateInfo>()
-                            .map_err(|err| AttrParseError::new(err, StationInfo::TxBitrate))?;
-                        station.rx_bitrate = Some(RateInfo::parse(sub_handle)?);
+                        let sub_handle = sub_attr.get_attr_handle()?;
+                        station.rx_bitrate = Some(sub_handle.try_into()?);
                     }
                     StationInfo::TxBitrate => {
-                        let sub_handle = sub_attr
-                            .get_nested_attributes::<NlRateInfo>()
-                            .map_err(|err| AttrParseError::new(err, StationInfo::TxBitrate))?;
-                        station.tx_bitrate = Some(RateInfo::parse(sub_handle)?);
+                        let sub_handle = sub_attr.get_attr_handle()?;
+                        station.tx_bitrate = Some(sub_handle.try_into()?);
                     }
                     StationInfo::TidStats => {
-                        tid_stats_attr = Some(
-                            sub_attr
-                                .get_nested_attributes::<u16>()
-                                .map_err(|err| AttrParseError::new(err, StationInfo::TidStats))?,
-                        );
+                        tid_stats_attr = Some(sub_attr.get_attr_handle()?);
                     }
                     StationInfo::BssParam => {
-                        bss_param_attr = Some(
-                            sub_attr
-                                .get_nested_attributes::<BssParam>()
-                                .map_err(|err| AttrParseError::new(err, StationInfo::BssParam))?,
-                        );
+                        bss_param_attr = Some(sub_attr.get_attr_handle()?);
                     }
                     unhandled => println!(
                         "Unhandled station info attribute 'StationInfo::{:?}'",
@@ -204,32 +191,29 @@ impl AttributeParser<Attribute> for WirelessStation {
             if let Some(sub_handle) = tid_stats_attr {
                 let mut all_tid_stats: [TrafficIdStats; 17] = Default::default();
                 for sub_attr in sub_handle.iter() {
-                    let nested_handle = sub_attr
-                        .get_nested_attributes::<TidStats>()
-                        .map_err(|err| AttrParseError::new(err, StationInfo::TidStats))?;
+                    let nested_handle = sub_attr.get_attr_handle()?;
                     for tid_attr in nested_handle.iter() {
-                        let mut tid_stats = TrafficIdStats::new(sub_attr.nla_type as u8);
-                        match &tid_attr.nla_type {
+                        let mut tid_stats = TrafficIdStats::new(sub_attr.nla_type.nla_type as u8);
+                        match tid_attr.nla_type.nla_type {
                             TidStats::RxMsdu => {
-                                tid_stats.rx_msdu = Some(u64::parse(tid_attr)?);
+                                tid_stats.rx_msdu = Some(tid_attr.get_payload_as()?);
                             }
                             TidStats::TxMsdu => {
-                                tid_stats.tx_msdu = Some(u64::parse(tid_attr)?);
+                                tid_stats.tx_msdu = Some(tid_attr.get_payload_as()?);
                             }
                             TidStats::TxMsduRetries => {
-                                tid_stats.tx_msdu_retries = Some(u64::parse(tid_attr)?);
+                                tid_stats.tx_msdu_retries = Some(tid_attr.get_payload_as()?);
                             }
                             TidStats::TxMsduFailed => {
-                                tid_stats.tx_msdu_failed = Some(u64::parse(tid_attr)?);
+                                tid_stats.tx_msdu_failed = Some(tid_attr.get_payload_as()?);
                             }
                             TidStats::Pad => (), // Attribute used for padding for 64-bit alignment.
                             TidStats::TxqStats => (), // TODO: Get txq stats.
-                            unhandled => println!(
-                                "Unhandled tid stats attribute 'TidStats::{:?}'",
-                                &unhandled
-                            ),
+                            unhandled => {
+                                println!("Unhandled tid stats attribute 'TidStats::{unhandled:?}'")
+                            }
                         }
-                        all_tid_stats[sub_attr.nla_type as usize - 1] = tid_stats;
+                        all_tid_stats[sub_attr.nla_type.nla_type as usize - 1] = tid_stats;
                     }
                 }
                 station.tid_stats = Some(all_tid_stats);
@@ -240,7 +224,7 @@ impl AttributeParser<Attribute> for WirelessStation {
                 station.bss_short_preamble = Some(false);
                 station.bss_short_slot_time = Some(false);
                 for sub_attr in sub_handle.iter() {
-                    match &sub_attr.nla_type {
+                    match sub_attr.nla_type.nla_type {
                         BssParam::CtsProt => {
                             station.bss_cts_protection = Some(true);
                         }
@@ -251,16 +235,13 @@ impl AttributeParser<Attribute> for WirelessStation {
                             station.bss_short_slot_time = Some(true);
                         }
                         BssParam::DtimPeriod => {
-                            station.bss_dtim_period = Some(u8::parse(sub_attr)?);
+                            station.bss_dtim_period = Some(sub_attr.get_payload_as()?);
                         }
                         BssParam::BeaconInterval => {
-                            station.bss_beacon_interval = Some(u16::parse(sub_attr)?);
+                            station.bss_beacon_interval = Some(sub_attr.get_payload_as()?);
                         }
                         unhandled => {
-                            return Err(AttrParseError::new(
-                                "Unhandled BSS param attribute",
-                                unhandled,
-                            ));
+                            println!("Unhandled BSS param attribute 'BssParam::{unhandled:?}'")
                         }
                     }
                 }
@@ -317,8 +298,10 @@ pub struct RateInfo {
     ru_allocation: Option<HeRuAllocation>,
 }
 
-impl AttributeParser<NlRateInfo> for RateInfo {
-    fn parse(handle: AttrHandle<NlRateInfo>) -> Result<Self, AttrParseError> {
+impl TryFrom<Attrs<'_, NlRateInfo>> for RateInfo {
+    type Error = DeError;
+
+    fn try_from(handle: Attrs<'_, NlRateInfo>) -> Result<Self, Self::Error> {
         let mut bitrate_info = Self {
             bitrate: 0,
             mcs: 0,
@@ -332,15 +315,16 @@ impl AttributeParser<NlRateInfo> for RateInfo {
             ru_allocation: None,
         };
         for attr in handle.iter() {
-            match &attr.nla_type {
+            match attr.nla_type.nla_type {
                 NlRateInfo::Bitrate => {
                     if bitrate_info.bitrate == 0 {
-                        bitrate_info.bitrate = u16::parse(attr)? as u32;
+                        let bitrate: u16 = attr.get_payload_as()?;
+                        bitrate_info.bitrate = bitrate as u32;
                     }
                 }
                 NlRateInfo::Mcs => {
-                    bitrate_info.connection_type = ConnectionType::HT;
-                    bitrate_info.mcs = u8::parse(attr)?;
+                    bitrate_info.connection_type = ConnectionType::Ht;
+                    bitrate_info.mcs = attr.get_payload_as()?;
                     if bitrate_info.mcs < 8 {
                         bitrate_info.stream_count = 1;
                     } else if bitrate_info.mcs < 16 {
@@ -358,14 +342,14 @@ impl AttributeParser<NlRateInfo> for RateInfo {
                     bitrate_info.guard_interval = GuardIntervals::Usec0_4;
                 }
                 NlRateInfo::Bitrate32 => {
-                    bitrate_info.bitrate = u32::parse(attr)?;
+                    bitrate_info.bitrate = attr.get_payload_as()?;
                 }
                 NlRateInfo::VhtMcs => {
-                    bitrate_info.mcs = u8::parse(attr)?;
-                    bitrate_info.connection_type = ConnectionType::VHT;
+                    bitrate_info.mcs = attr.get_payload_as()?;
+                    bitrate_info.connection_type = ConnectionType::Vht;
                 }
                 NlRateInfo::VhtNss => {
-                    bitrate_info.stream_count = u8::parse(attr)?;
+                    bitrate_info.stream_count = attr.get_payload_as()?;
                 }
                 NlRateInfo::MhzWidth80 => {
                     bitrate_info.channel_width = ChannelWidth::Width80;
@@ -383,18 +367,15 @@ impl AttributeParser<NlRateInfo> for RateInfo {
                     bitrate_info.channel_width = ChannelWidth::Width5;
                 }
                 NlRateInfo::HeMcs => {
-                    bitrate_info.mcs = u8::parse(attr)?;
-                    bitrate_info.connection_type = ConnectionType::HE;
+                    bitrate_info.mcs = attr.get_payload_as()?;
+                    bitrate_info.connection_type = ConnectionType::He;
                 }
                 NlRateInfo::HeNss => {
-                    bitrate_info.stream_count = u8::parse(attr)?;
+                    bitrate_info.stream_count = attr.get_payload_as()?;
                 }
                 NlRateInfo::HeGuardInterval => {
                     let payload = handle
-                        .get_attr_payload_as::<HeGuardInterval>(NlRateInfo::HeGuardInterval)
-                        .map_err(|err| {
-                            AttrParseError::new(err.to_string(), NlRateInfo::HeGuardInterval)
-                        })?;
+                        .get_attr_payload_as::<HeGuardInterval>(NlRateInfo::HeGuardInterval)?;
                     bitrate_info.guard_interval = match payload {
                         HeGuardInterval::Usec0_8 => GuardIntervals::Usec0_8,
                         HeGuardInterval::Usec1_6 => GuardIntervals::Usec1_6,
@@ -406,14 +387,10 @@ impl AttributeParser<NlRateInfo> for RateInfo {
                     }
                 }
                 NlRateInfo::HeDcm => {
-                    bitrate_info.dcm_value = Some(u8::parse(attr)?);
+                    bitrate_info.dcm_value = Some(attr.get_payload_as()?);
                 }
                 NlRateInfo::HeRuAlloc => {
-                    let payload = handle
-                        .get_attr_payload_as::<HeRuAlloc>(NlRateInfo::HeRuAlloc)
-                        .map_err(|err| {
-                            AttrParseError::new(err.to_string(), NlRateInfo::HeRuAlloc)
-                        })?;
+                    let payload = handle.get_attr_payload_as::<HeRuAlloc>(NlRateInfo::HeRuAlloc)?;
                     let ru_allocation = match payload {
                         HeRuAlloc::Alloc26 => HeRuAllocation::Alloc26,
                         HeRuAlloc::Alloc52 => HeRuAllocation::Alloc52,
@@ -423,14 +400,14 @@ impl AttributeParser<NlRateInfo> for RateInfo {
                         HeRuAlloc::Alloc996 => HeRuAllocation::Alloc996,
                         HeRuAlloc::Alloc2x996 => HeRuAllocation::Alloc2x996,
                         unknown => {
-                            println!("Unknown HE RU allocation attribute {:?}", unknown);
+                            println!("Unknown HE RU allocation attribute {unknown:?}");
                             HeRuAllocation::Unknown
                         }
                     };
                     bitrate_info.ru_allocation = Some(ru_allocation);
                 }
                 unhandled => {
-                    println!("Unhandled rate info attribute {:?}", unhandled);
+                    println!("Unhandled rate info attribute 'NlRateInfo::{unhandled:?}'");
                 }
             }
         }
@@ -441,11 +418,11 @@ impl AttributeParser<NlRateInfo> for RateInfo {
 #[derive(Debug, Clone)]
 pub enum ConnectionType {
     /// High Throughput (802.11n).
-    HT,
+    Ht,
     /// Very High Throughput (802.11ac).
-    VHT,
+    Vht,
     /// High Efficiency (802.11ax).
-    HE,
+    He,
     /// Unknown connection type.
     Unknown,
 }
@@ -453,9 +430,9 @@ pub enum ConnectionType {
 impl fmt::Display for ConnectionType {
     fn fmt(&self, f: &mut fmt::Formatter<'_>) -> fmt::Result {
         let as_string = match self {
-            Self::HT => "HT",
-            Self::VHT => "VHT",
-            Self::HE => "HE",
+            Self::Ht => "HT",
+            Self::Vht => "VHT",
+            Self::He => "HE",
             Self::Unknown => "Unknown",
         };
         write!(f, "{}", as_string)
