@@ -2,7 +2,7 @@ use neli::attr::Attribute as NeliAttribute;
 use neli::err::DeError;
 
 use super::attributes::Attribute;
-use crate::attributes::{Attrs, WiphyBands};
+use crate::attributes::{Attrs, Band, BandAttr, FrequencyAttr};
 
 #[derive(Debug, Clone, Default)]
 /// Physical wireless device information returned from netlink.
@@ -14,6 +14,9 @@ pub struct PhysicalDevice {
     /// Used to indicate consistent snapshots for dumps. This number increases
     /// whenever the object list being dumped changes.
     pub generation: u32,
+    pub band_2ghz: Option<WifiBand>,
+    pub band_5ghz: Option<WifiBand>,
+    pub band_6ghz: Option<WifiBand>,
 }
 
 impl TryFrom<Attrs<'_, Attribute>> for PhysicalDevice {
@@ -21,7 +24,7 @@ impl TryFrom<Attrs<'_, Attribute>> for PhysicalDevice {
 
     fn try_from(handle: Attrs<'_, Attribute>) -> Result<Self, Self::Error> {
         let mut device = PhysicalDevice::default();
-        let mut wiphy_bands_attr: Option<Attrs<'_, WiphyBands>> = None;
+        let mut wiphy_bands_attr: Option<Attrs<'_, Band>> = None;
 
         for attr in handle.iter() {
             match attr.nla_type.nla_type {
@@ -67,11 +70,53 @@ impl TryFrom<Attrs<'_, Attribute>> for PhysicalDevice {
         if let Some(sub_handle) = wiphy_bands_attr {
             for sub_attr in sub_handle.iter() {
                 match sub_attr.nla_type.nla_type {
-                    WiphyBands::Invalid => (),
-                    unhandled => println!("Unhandled wiphy band 'Attribute::{:?}'", &unhandled),
+                    Band::Band2ghz => {
+                        let sub_handle: Attrs<'_, BandAttr> = sub_attr.get_attr_handle()?;
+                        device.band_2ghz = Some(sub_handle.try_into()?);
+                    }
+                    Band::Band5ghz => {
+                        let sub_handle: Attrs<'_, BandAttr> = sub_attr.get_attr_handle()?;
+                        device.band_5ghz = Some(sub_handle.try_into()?);
+                    }
+                    Band::Band6ghz => {
+                        let sub_handle: Attrs<'_, BandAttr> = sub_attr.get_attr_handle()?;
+                        device.band_6ghz = Some(sub_handle.try_into()?);
+                    }
+                    Band::Band60ghz | Band::BandS1ghz | Band::BandLc => (),
+                    unhandled => println!("Unhandled band 'Attribute::{:?}'", &unhandled),
                 }
             }
         }
         Ok(device)
+    }
+}
+
+#[derive(Debug, Clone, Default)]
+/// Wi-Fi band.
+pub struct WifiBand {
+    /// Supported frequencies in MHz.
+    pub frequencies: Vec<u32>,
+}
+
+impl TryFrom<Attrs<'_, BandAttr>> for WifiBand {
+    type Error = DeError;
+
+    fn try_from(handle: Attrs<'_, BandAttr>) -> Result<Self, Self::Error> {
+        let mut band = WifiBand::default();
+        for attr in handle.iter() {
+            if attr.nla_type.nla_type == BandAttr::Frequencies {
+                let sub_handle: Attrs<'_, u16> = attr.get_attr_handle()?;
+                for sub_attr in sub_handle.iter() {
+                    let freq_handle: Attrs<'_, FrequencyAttr> = sub_attr.get_attr_handle()?;
+                    for freq_attr in freq_handle.iter() {
+                        if freq_attr.nla_type.nla_type == FrequencyAttr::Frequency {
+                            let freq: u32 = freq_attr.get_payload_as()?;
+                            band.frequencies.push(freq);
+                        }
+                    }
+                }
+            }
+        }
+        Ok(band)
     }
 }
