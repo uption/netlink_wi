@@ -681,7 +681,7 @@ impl NlAttrType for TidStats {}
 /// nl80211_band_attr enum from:
 /// https://github.com/torvalds/linux/blob/master/include/uapi/linux/nl80211.h
 #[neli_enum(serialized_type = "u16")]
-pub enum WiphyBands {
+pub enum BandAttr {
     /// Attribute number 0 is reserved.
     Invalid = 0,
     /// Supported frequencies in this band, an array of nested frequency attributes.
@@ -709,8 +709,102 @@ pub enum WiphyBands {
     /// Channel BW Configuration subfield encodes the allowed channel bandwidth
     /// configurations. Defined by IEEE P802.11ay/D4.0 section 9.4.2.251, Table 13.
     EdmgBwConfig = 11,
-    /// Highest band attribute currently defined.
-    BandAttrMax = 12,
 }
 
-impl NlAttrType for WiphyBands {}
+impl NlAttrType for BandAttr {}
+
+/// Frequency band.
+///
+/// nl80211_band enum from:
+/// https://github.com/torvalds/linux/blob/master/include/uapi/linux/nl80211.h
+#[neli_enum(serialized_type = "u16")]
+pub enum Band {
+    /// 2.4 GHz ISM band.
+    Band2ghz = 0,
+    /// 5 GHz band (4.9 - 5.7 GHz).
+    Band5ghz = 1,
+    /// 60 GHz band (58.32 - 69.12 GHz).
+    Band60ghz = 2,
+    /// 6 GHz band (5.9 - 7.2 GHz).
+    Band6ghz = 3,
+    /// 900MHz, supported by S1G PHYs.
+    BandS1ghz = 4,
+    /// Light communication band (placeholder).
+    BandLc = 5,
+}
+
+impl NlAttrType for Band {}
+
+/// Frequency attributes.
+///
+/// enum from:
+/// https://github.com/torvalds/linux/blob/master/include/uapi/linux/nl80211.h
+#[neli_enum(serialized_type = "u16")]
+pub enum FrequencyAttr {
+    /// Attribute number 0 is reserved.
+    Invalid = 0,
+    /// Frequency in MHz
+    Frequency = 1,
+    /// Channel is disabled in current regulatory domain.
+    Disabled = 2,
+    /// No mechanisms that initiate radiation are permitted on this channel,
+    /// this includes sending probe requests, or modes of operation that require
+    /// beaconing.
+    NoIr = 3,
+    /// Not in use (NoIbss == NoIr).
+    NoIbss = 4,
+    /// Radar detection is mandatory on this channel in current regulatory domain.
+    Radar = 5,
+    /// Maximum transmission power in mBm (100 * dBm).
+    MaxTxPower = 6,
+    /// Current state for DFS (enum nl80211_dfs_state).
+    DfsState = 7,
+    /// Time in miliseconds for how long this channel is in this DFS state.
+    DfdTime = 8,
+    /// HT40- isn't possible with this channel as the control channel.
+    NoHt40Minus = 9,
+    /// HT40+ isn't possible with this channel as the control channel.
+    NoHt40Plus = 10,
+    /// Any 80 MHz channel using this channel as the primary or any of the
+    /// secondary channels isn't possible, this includes 80+80 channels.
+    No80Mhz = 11,
+    /// Any 160 MHz (but not 80+80) channel using this channel as the primary or
+    /// any of the secondary channels isn't possible.
+    No160Mhz = 12,
+    /// DFS CAC time in milliseconds.
+    DfsCacTime = 13,
+    /// Only indoor use is permitted on this channel.
+    IndoorOnly = 14,
+    /// IR operation is allowed on this channel if it's connected concurrently
+    /// to a BSS on the same channel on the 2 GHz band or to a channel in the
+    /// same UNII band (on the 5 GHz band), and IEEE80211_CHAN_RADAR is not set.
+    IrConcurrent = 15,
+    /// 20 MHz operation is not allowed on this channel in current regulatory domain.
+    No20Mhz = 16,
+    /// 10 MHz operation is not allowed on this channel in current regulatory domain.
+    No10Mhz = 17,
+    /// This channel has wmm limitations. This is a nested attribute that
+    /// contains the wmm limitation per AC. (see &enum nl80211_wmm_rule).
+    Wmm = 18,
+    /// HE operation is not allowed on this channel in current regulatory domain.
+    NoHe = 19,
+    /// Frequency offset in KHz.
+    Offset = 20,
+    /// 1 MHz operation is allowed on this channel in current regulatory domain.
+    Allow1Mhz = 21,
+    /// 2 MHz operation is allowed on this channel in current regulatory domain.
+    Allow2Mhz = 22,
+    /// 4 MHz operation is allowed on this channel in current regulatory domain.
+    Allow4Mhz = 23,
+    /// 8 MHz operation is allowed on this channel in current regulatory domain.
+    Allow8Mhz = 24,
+    /// 16 MHz operation is allowed on this channel in current regulatory domain.
+    Allow16Mhz = 25,
+    /// Any 320 MHz channel using this channel as the primary or any of the
+    /// secondary channels isn't possible.
+    No320Mhz = 26,
+    /// EHT operation is not allowed on this channel in current regulatory domain.
+    NoEht = 27,
+}
+
+impl NlAttrType for FrequencyAttr {}
