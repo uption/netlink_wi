@@ -22,5 +22,6 @@ name = "netlink_wi"
 path = "src/lib.rs"
 
 [dependencies]
+log = "0.4"
 neli = "0.6.3"
 neli-proc-macros = "0.1.3"

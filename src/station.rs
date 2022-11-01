@@ -1,6 +1,7 @@
 use std::fmt;
 use std::time::Duration;
 
+use log::debug;
 use neli::attr::Attribute as NeliAttribute;
 use neli::err::DeError;
 
@@ -94,7 +95,7 @@ impl TryFrom<Attrs<'_, Attribute>> for WirelessStation {
                 Attribute::StaInfo => {
                     station_info_attr = Some(attr.get_attr_handle()?);
                 }
-                unhandled => println!("Unhandled station attribute 'Attribute::{:?}'", &unhandled),
+                unhandled => debug!("Unhandled station attribute 'Attribute::{unhandled:?}'"),
             }
         }
 
@@ -182,7 +183,7 @@ impl TryFrom<Attrs<'_, Attribute>> for WirelessStation {
                         bss_param_attr = Some(sub_attr.get_attr_handle()?);
                     }
                     unhandled => {
-                        println!("Unhandled station info attribute 'StationInfo::{unhandled:?}'",)
+                        debug!("Unhandled station info attribute 'StationInfo::{unhandled:?}'",)
                     }
                 }
             }
@@ -209,7 +210,7 @@ impl TryFrom<Attrs<'_, Attribute>> for WirelessStation {
                             TidStats::Pad => (), // Attribute used for padding for 64-bit alignment.
                             TidStats::TxqStats => (), // TODO: Get txq stats.
                             unhandled => {
-                                println!("Unhandled tid stats attribute 'TidStats::{unhandled:?}'")
+                                debug!("Unhandled tid stats attribute 'TidStats::{unhandled:?}'")
                             }
                         }
                         all_tid_stats[sub_attr.nla_type.nla_type as usize - 1] = tid_stats;
@@ -240,7 +241,7 @@ impl TryFrom<Attrs<'_, Attribute>> for WirelessStation {
                             station.bss_beacon_interval = Some(sub_attr.get_payload_as()?);
                         }
                         unhandled => {
-                            println!("Unhandled BSS param attribute 'BssParam::{unhandled:?}'")
+                            debug!("Unhandled BSS param attribute 'BssParam::{unhandled:?}'")
                         }
                     }
                 }
@@ -380,7 +381,7 @@ impl TryFrom<Attrs<'_, NlRateInfo>> for RateInfo {
                         HeGuardInterval::Usec1_6 => GuardIntervals::Usec1_6,
                         HeGuardInterval::Usec3_2 => GuardIntervals::Usec3_2,
                         unknown => {
-                            println!("Unknown HE guard interval attribute {:?}", unknown);
+                            debug!("Unknown HE guard interval attribute {unknown:?}");
                             GuardIntervals::Unknown
                         }
                     }
@@ -399,14 +400,14 @@ impl TryFrom<Attrs<'_, NlRateInfo>> for RateInfo {
                         HeRuAlloc::Alloc996 => HeRuAllocation::Alloc996,
                         HeRuAlloc::Alloc2x996 => HeRuAllocation::Alloc2x996,
                         unknown => {
-                            println!("Unknown HE RU allocation attribute {unknown:?}");
+                            debug!("Unknown HE RU allocation attribute {unknown:?}");
                             HeRuAllocation::Unknown
                         }
                     };
                     bitrate_info.ru_allocation = Some(ru_allocation);
                 }
                 unhandled => {
-                    println!("Unhandled rate info attribute 'NlRateInfo::{unhandled:?}'");
+                    debug!("Unhandled rate info attribute 'NlRateInfo::{unhandled:?}'");
                 }
             }
         }

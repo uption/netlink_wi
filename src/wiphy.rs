@@ -1,3 +1,4 @@
+use log::debug;
 use neli::attr::Attribute as NeliAttribute;
 use neli::err::DeError;
 
@@ -67,7 +68,7 @@ impl TryFrom<Attrs<'_, Attribute>> for PhysicalDevice {
                 | Attribute::InterfaceCombinations
                 | Attribute::FeatureFlags
                 | Attribute::HtCapabilityMask => (), // TODO: Implement all wiphy attributes.
-                unhandled => println!("Unhandled station attribute 'Attribute::{unhandled:?}'"),
+                unhandled => debug!("Unhandled station attribute 'Attribute::{unhandled:?}'"),
             }
         }
         if let Some(sub_handle) = wiphy_bands_attr {
@@ -86,7 +87,7 @@ impl TryFrom<Attrs<'_, Attribute>> for PhysicalDevice {
                         device.band_6ghz = Some(sub_handle.try_into()?);
                     }
                     Band::Band60ghz | Band::BandS1ghz | Band::BandLc => (),
-                    unhandled => println!("Unhandled band 'Band::{unhandled:?}'"),
+                    unhandled => debug!("Unhandled band 'Band::{unhandled:?}'"),
                 }
             }
         }
@@ -126,7 +127,7 @@ impl TryFrom<Attrs<'_, BandAttr>> for WifiBand {
                 | BandAttr::IftypeData
                 | BandAttr::EdmgChannels
                 | BandAttr::EdmgBwConfig => (), // TODO: Implement all band attributes.
-                unhandled => println!("Unhandled band attribute 'BandAttr::{unhandled:?}'"),
+                unhandled => debug!("Unhandled band attribute 'BandAttr::{unhandled:?}'"),
             }
         }
         Ok(band)
@@ -192,7 +193,7 @@ impl TryFrom<Attrs<'_, FrequencyAttr>> for Frequency {
                 | FrequencyAttr::No320Mhz
                 | FrequencyAttr::NoEht => (), // TODO: Implement all frequency attributes.
                 unhandled => {
-                    println!("Unhandled frequency attribute 'FrequencyAttr::{unhandled:?}'",)
+                    debug!("Unhandled frequency attribute 'FrequencyAttr::{unhandled:?}'",)
                 }
             }
         }

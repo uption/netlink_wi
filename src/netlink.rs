@@ -1,3 +1,4 @@
+use log::error;
 use neli::consts::genl::{CtrlAttr, CtrlCmd};
 use neli::consts::nl::{GenlId, NlmF, NlmFFlags, Nlmsg};
 use neli::consts::socket::NlFamily;
@@ -43,11 +44,10 @@ impl NlSocket {
 
         let mut responses = Vec::new();
         for response in self.socket.iter::<Nlmsg, Neli80211Header>(false) {
-            println!("{response:?}");
             let response = response.map_err(NlError::new)?;
             match response.nl_payload {
                 NlPayload::Err(e) => {
-                    println!("Error when reading GetInterface response: {e}");
+                    error!("Error when reading GetInterface response: {e}");
                     break;
                 }
                 NlPayload::Payload(payload) => {
@@ -78,7 +78,7 @@ impl NlSocket {
             let response = response.map_err(NlError::new)?;
             match response.nl_payload {
                 NlPayload::Err(e) => {
-                    println!("Error when reading GetStation response: {e}");
+                    error!("Error when reading GetStation response: {e}");
                     break;
                 }
                 NlPayload::Payload(payload) => {
@@ -104,7 +104,7 @@ impl NlSocket {
             let response = response.map_err(NlError::new)?;
             match response.nl_payload {
                 NlPayload::Err(e) => {
-                    println!("Error when reading GetWiphy response: {e}");
+                    error!("Error when reading GetWiphy response: {e}");
                     break;
                 }
                 NlPayload::Payload(payload) => {

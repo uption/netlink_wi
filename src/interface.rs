@@ -1,6 +1,7 @@
 use std::convert::TryFrom;
 use std::fmt;
 
+use log::debug;
 use neli::attr::Attribute as NeliAttribute;
 use neli::err::DeError;
 use neli::FromBytes;
@@ -103,7 +104,7 @@ impl TryFrom<Attrs<'_, Attribute>> for WirelessInterface {
                     txq_stats_attr = Some(attr.get_attr_handle()?);
                 }
                 unhandled => {
-                    println!("Unhandled wireless interface attribute {unhandled:?}");
+                    debug!("Unhandled wireless interface attribute 'Attribute::{unhandled:?}'");
                 }
             }
         }
@@ -190,7 +191,9 @@ impl TryFrom<Attrs<'_, Attribute>> for WirelessInterface {
                     TxqStats::MaxFlows => {
                         txq_statistics.max_flows = Some(sub_attr.get_payload_as()?);
                     }
-                    unhandled => println!("Unhandled txq statistics attribute {unhandled:?}"),
+                    unhandled => {
+                        debug!("Unhandled txq statistics attribute 'TxqStats::{unhandled:?}'")
+                    }
                 }
             }
             interface.txq_statistics = Some(txq_statistics);
