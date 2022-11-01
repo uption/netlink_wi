@@ -64,6 +64,7 @@ dependencies = [
 name = "netlink_wi"
 version = "0.3.0"
 dependencies = [
+ "log",
  "neli",
  "neli-proc-macros",
 ]
