@@ -190,7 +190,7 @@ impl TryFrom<Attrs<'_, Attribute>> for WirelessInterface {
                     TxqStats::MaxFlows => {
                         txq_statistics.max_flows = Some(sub_attr.get_payload_as()?);
                     }
-                    unhandled => println!("Unhandled txq statistics attribute {:?}", unhandled),
+                    unhandled => println!("Unhandled txq statistics attribute {unhandled:?}"),
                 }
             }
             interface.txq_statistics = Some(txq_statistics);
@@ -200,6 +200,7 @@ impl TryFrom<Attrs<'_, Attribute>> for WirelessInterface {
 }
 
 #[derive(Debug, Clone, Default)]
+/// Transmit queue statistics.
 pub struct TransmitQueueStats {
     /// Number of bytes currently backlogged.
     pub backlog_bytes: Option<u32>,
@@ -226,6 +227,7 @@ pub struct TransmitQueueStats {
 }
 
 #[derive(Debug, Copy, Clone, Default)]
+/// MAC-address.
 pub struct MacAddress {
     address_bytes: [u8; 6],
 }
@@ -244,7 +246,7 @@ impl fmt::Display for MacAddress {
             .map(|x| format!("{:02X}", x))
             .collect::<Vec<String>>()
             .join(":");
-        write!(f, "{}", hex)
+        write!(f, "{hex}")
     }
 }
 
@@ -260,6 +262,7 @@ impl<'a> FromBytes<'a> for MacAddress {
 }
 
 #[derive(Debug, Copy, Clone)]
+/// Virtual interface type.
 pub enum InterfaceType {
     /// Unspecified type, driver decides.
     Unspecified,
@@ -309,11 +312,12 @@ impl fmt::Display for InterfaceType {
             InterfaceType::NotNetdev => "Not a netdev",
             InterfaceType::Unknown => "Unknown interface type",
         };
-        write!(f, "{}", interface_type)
+        write!(f, "{interface_type}")
     }
 }
 
 #[derive(Debug, Copy, Clone)]
+/// Wireless channel width.
 pub enum ChannelWidth {
     Width20NoHT,
     Width20,
@@ -391,6 +395,6 @@ impl fmt::Display for ChannelWidth {
             ChannelWidth::Width16 => "16 MHz OFDM",
             ChannelWidth::Unknown => "Unknown channel width",
         };
-        write!(f, "{}", channel_width)
+        write!(f, "{channel_width}")
     }
 }

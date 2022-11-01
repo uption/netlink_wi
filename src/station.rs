@@ -181,10 +181,9 @@ impl TryFrom<Attrs<'_, Attribute>> for WirelessStation {
                     StationInfo::BssParam => {
                         bss_param_attr = Some(sub_attr.get_attr_handle()?);
                     }
-                    unhandled => println!(
-                        "Unhandled station info attribute 'StationInfo::{:?}'",
-                        &unhandled
-                    ),
+                    unhandled => {
+                        println!("Unhandled station info attribute 'StationInfo::{unhandled:?}'",)
+                    }
                 }
             }
 
@@ -416,6 +415,7 @@ impl TryFrom<Attrs<'_, NlRateInfo>> for RateInfo {
 }
 
 #[derive(Debug, Clone)]
+/// Connection or frame type.
 pub enum ConnectionType {
     /// High Throughput (802.11n).
     Ht,

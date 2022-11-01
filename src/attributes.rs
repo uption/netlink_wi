@@ -13,7 +13,7 @@ pub type Attrs<'a, T> = AttrHandle<'a, GenlBuffer<T, Buffer>, Nlattr<T, Buffer>>
 /// nl80211_attrs enum from:
 /// https://github.com/torvalds/linux/blob/master/include/uapi/linux/nl80211.h
 #[neli_enum(serialized_type = "u16")]
-pub enum Attribute {
+pub(crate) enum Attribute {
     Unspec = 0,
     /// Index of wiphy to operate on, cf. /sys/class/ieee80211/<phyname>/index.
     Wiphy = 1,
@@ -351,7 +351,7 @@ impl NlAttrType for Attribute {}
 /// nl80211_iftype enum from:
 /// https://github.com/torvalds/linux/blob/master/include/uapi/linux/nl80211.h
 #[neli_enum(serialized_type = "u16")]
-pub enum InterfaceType {
+pub(crate) enum InterfaceType {
     /// Unspecified type, driver decides.
     Unspecified = 0,
     /// Independent BSS member.
@@ -393,7 +393,7 @@ impl NlAttrType for InterfaceType {}
 /// nl80211_txq_stats enum from:
 /// https://github.com/torvalds/linux/blob/master/include/uapi/linux/nl80211.h
 #[neli_enum(serialized_type = "u16")]
-pub enum TxqStats {
+pub(crate) enum TxqStats {
     /// Attribute number 0 is reserved.
     Invalid = 0,
     /// Number of bytes currently backlogged.
@@ -430,7 +430,7 @@ impl NlAttrType for TxqStats {}
 /// nl80211_sta_info enum from:
 /// https://github.com/torvalds/linux/blob/master/include/uapi/linux/nl80211.h
 #[neli_enum(serialized_type = "u16")]
-pub enum StationInfo {
+pub(crate) enum StationInfo {
     /// Attribute number 0 is reserved.
     Invalid = 0,
     /// Time since last activity.
@@ -538,7 +538,7 @@ impl NlAttrType for StationInfo {}
 /// nl80211_rate_info enum from:
 /// https://github.com/torvalds/linux/blob/master/include/uapi/linux/nl80211.h
 #[neli_enum(serialized_type = "u16")]
-pub enum RateInfo {
+pub(crate) enum RateInfo {
     /// Attribute number 0 is reserved.
     Invalid = 0,
     /// Total bitrate (u16, 100kbit/s).
@@ -589,7 +589,7 @@ impl NlAttrType for RateInfo {}
 /// nl80211_sta_bss_param enum from:
 /// https://github.com/torvalds/linux/blob/master/include/uapi/linux/nl80211.h
 #[neli_enum(serialized_type = "u16")]
-pub enum BssParam {
+pub(crate) enum BssParam {
     /// Attribute number 0 is reserved.
     Invalid = 0,
     /// Whether CTS protection is enabled (flag).
@@ -613,7 +613,7 @@ impl NlAttrType for BssParam {}
 /// nl80211_he_gi enum from:
 /// https://github.com/torvalds/linux/blob/master/include/uapi/linux/nl80211.h
 #[neli_enum(serialized_type = "u16")]
-pub enum HeGuardInterval {
+pub(crate) enum HeGuardInterval {
     /// 0.8 usec
     Usec0_8 = 0,
     /// 1.6 usec
@@ -631,7 +631,7 @@ impl NlAttrType for HeGuardInterval {}
 /// nl80211_he_ru_alloc enum from:
 /// https://github.com/torvalds/linux/blob/master/include/uapi/linux/nl80211.h
 #[neli_enum(serialized_type = "u16")]
-pub enum HeRuAlloc {
+pub(crate) enum HeRuAlloc {
     /// 26-tone RU allocation.
     Alloc26 = 0,
     /// 52-tone RU allocation.
@@ -657,7 +657,7 @@ impl NlAttrType for HeRuAlloc {}
 /// nl80211_tid_stats enum from:
 /// https://github.com/torvalds/linux/blob/master/include/uapi/linux/nl80211.h
 #[neli_enum(serialized_type = "u16")]
-pub enum TidStats {
+pub(crate) enum TidStats {
     /// Attribute number 0 is reserved.
     Invalid = 0,
     /// Number of MSDUs received (u64).
@@ -681,7 +681,7 @@ impl NlAttrType for TidStats {}
 /// nl80211_band_attr enum from:
 /// https://github.com/torvalds/linux/blob/master/include/uapi/linux/nl80211.h
 #[neli_enum(serialized_type = "u16")]
-pub enum BandAttr {
+pub(crate) enum BandAttr {
     /// Attribute number 0 is reserved.
     Invalid = 0,
     /// Supported frequencies in this band, an array of nested frequency attributes.
@@ -717,8 +717,9 @@ impl NlAttrType for BandAttr {}
 ///
 /// nl80211_band enum from:
 /// https://github.com/torvalds/linux/blob/master/include/uapi/linux/nl80211.h
+#[allow(clippy::enum_variant_names)]
 #[neli_enum(serialized_type = "u16")]
-pub enum Band {
+pub(crate) enum Band {
     /// 2.4 GHz ISM band.
     Band2ghz = 0,
     /// 5 GHz band (4.9 - 5.7 GHz).
@@ -740,7 +741,7 @@ impl NlAttrType for Band {}
 /// enum from:
 /// https://github.com/torvalds/linux/blob/master/include/uapi/linux/nl80211.h
 #[neli_enum(serialized_type = "u16")]
-pub enum FrequencyAttr {
+pub(crate) enum FrequencyAttr {
     /// Attribute number 0 is reserved.
     Invalid = 0,
     /// Frequency in MHz

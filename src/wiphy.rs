@@ -14,8 +14,11 @@ pub struct PhysicalDevice {
     /// Used to indicate consistent snapshots for dumps. This number increases
     /// whenever the object list being dumped changes.
     pub generation: u32,
+    /// 2.4 GHz band.
     pub band_2ghz: Option<WifiBand>,
+    /// 5 GHz band.
     pub band_5ghz: Option<WifiBand>,
+    /// 6 GHz band.
     pub band_6ghz: Option<WifiBand>,
 }
 
@@ -64,7 +67,7 @@ impl TryFrom<Attrs<'_, Attribute>> for PhysicalDevice {
                 | Attribute::InterfaceCombinations
                 | Attribute::FeatureFlags
                 | Attribute::HtCapabilityMask => (), // TODO: Implement all wiphy attributes.
-                unhandled => println!("Unhandled station attribute 'Attribute::{:?}'", &unhandled),
+                unhandled => println!("Unhandled station attribute 'Attribute::{unhandled:?}'"),
             }
         }
         if let Some(sub_handle) = wiphy_bands_attr {
@@ -83,7 +86,7 @@ impl TryFrom<Attrs<'_, Attribute>> for PhysicalDevice {
                         device.band_6ghz = Some(sub_handle.try_into()?);
                     }
                     Band::Band60ghz | Band::BandS1ghz | Band::BandLc => (),
-                    unhandled => println!("Unhandled band 'Attribute::{:?}'", &unhandled),
+                    unhandled => println!("Unhandled band 'Band::{unhandled:?}'"),
                 }
             }
         }
@@ -95,7 +98,7 @@ impl TryFrom<Attrs<'_, Attribute>> for PhysicalDevice {
 /// Wi-Fi band.
 pub struct WifiBand {
     /// Supported frequencies in MHz.
-    pub frequencies: Vec<u32>,
+    pub frequencies: Vec<Frequency>,
 }
 
 impl TryFrom<Attrs<'_, BandAttr>> for WifiBand {
@@ -104,19 +107,95 @@ impl TryFrom<Attrs<'_, BandAttr>> for WifiBand {
     fn try_from(handle: Attrs<'_, BandAttr>) -> Result<Self, Self::Error> {
         let mut band = WifiBand::default();
         for attr in handle.iter() {
-            if attr.nla_type.nla_type == BandAttr::Frequencies {
-                let sub_handle: Attrs<'_, u16> = attr.get_attr_handle()?;
-                for sub_attr in sub_handle.iter() {
-                    let freq_handle: Attrs<'_, FrequencyAttr> = sub_attr.get_attr_handle()?;
-                    for freq_attr in freq_handle.iter() {
-                        if freq_attr.nla_type.nla_type == FrequencyAttr::Frequency {
-                            let freq: u32 = freq_attr.get_payload_as()?;
-                            band.frequencies.push(freq);
-                        }
+            match attr.nla_type.nla_type {
+                BandAttr::Frequencies => {
+                    let sub_handle: Attrs<'_, u16> = attr.get_attr_handle()?;
+                    for sub_attr in sub_handle.iter() {
+                        let freq_handle: Attrs<'_, FrequencyAttr> = sub_attr.get_attr_handle()?;
+                        let freq: Frequency = freq_handle.try_into()?;
+                        band.frequencies.push(freq);
                     }
                 }
+                BandAttr::Bitrates
+                | BandAttr::HtMcsSet
+                | BandAttr::HtCapabilities
+                | BandAttr::HtAmpduFactor
+                | BandAttr::HtAmpduDensity
+                | BandAttr::VhtMcsSet
+                | BandAttr::VhtCapabilities
+                | BandAttr::IftypeData
+                | BandAttr::EdmgChannels
+                | BandAttr::EdmgBwConfig => (), // TODO: Implement all band attributes.
+                unhandled => println!("Unhandled band attribute 'BandAttr::{unhandled:?}'"),
             }
         }
         Ok(band)
+    }
+}
+
+#[derive(Debug, Clone, Default)]
+/// Frequency information.
+pub struct Frequency {
+    /// Frequency in MHz.
+    pub frequency: u32,
+    /// Channel is disabled in current regulatory domain.
+    pub disabled: bool,
+    /// No mechanisms that initiate radiation are permitted on this channel.
+    pub no_ir: bool,
+    /// Radar detection is mandatory on this channel in current regulatory domain.
+    pub radar_detection: bool,
+    /// Maximum transmission power in mBm (100 * dBm).
+    pub max_tx_power: u32,
+}
+
+impl TryFrom<Attrs<'_, FrequencyAttr>> for Frequency {
+    type Error = DeError;
+
+    fn try_from(handle: Attrs<'_, FrequencyAttr>) -> Result<Self, Self::Error> {
+        let mut frequency = Frequency::default();
+        for attr in handle.iter() {
+            match attr.nla_type.nla_type {
+                FrequencyAttr::Frequency => {
+                    frequency.frequency = attr.get_payload_as()?;
+                }
+                FrequencyAttr::Disabled => {
+                    frequency.disabled = true;
+                }
+                FrequencyAttr::NoIr | FrequencyAttr::NoIbss => {
+                    frequency.no_ir = true;
+                }
+                FrequencyAttr::Radar => {
+                    frequency.radar_detection = true;
+                }
+                FrequencyAttr::MaxTxPower => {
+                    frequency.max_tx_power = attr.get_payload_as()?;
+                }
+                FrequencyAttr::DfsState
+                | FrequencyAttr::DfdTime
+                | FrequencyAttr::NoHt40Minus
+                | FrequencyAttr::NoHt40Plus
+                | FrequencyAttr::No80Mhz
+                | FrequencyAttr::No160Mhz
+                | FrequencyAttr::DfsCacTime
+                | FrequencyAttr::IndoorOnly
+                | FrequencyAttr::IrConcurrent
+                | FrequencyAttr::No20Mhz
+                | FrequencyAttr::No10Mhz
+                | FrequencyAttr::Wmm
+                | FrequencyAttr::NoHe
+                | FrequencyAttr::Offset
+                | FrequencyAttr::Allow1Mhz
+                | FrequencyAttr::Allow2Mhz
+                | FrequencyAttr::Allow4Mhz
+                | FrequencyAttr::Allow8Mhz
+                | FrequencyAttr::Allow16Mhz
+                | FrequencyAttr::No320Mhz
+                | FrequencyAttr::NoEht => (), // TODO: Implement all frequency attributes.
+                unhandled => {
+                    println!("Unhandled frequency attribute 'FrequencyAttr::{unhandled:?}'",)
+                }
+            }
+        }
+        Ok(frequency)
     }
 }

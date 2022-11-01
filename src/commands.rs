@@ -5,7 +5,7 @@ use neli_proc_macros::neli_enum;
 ///
 /// nl80211_commands enum from https://github.com/torvalds/linux/blob/master/include/uapi/linux/nl80211.h
 #[neli_enum(serialized_type = "u8")]
-pub enum Command {
+pub(crate) enum Command {
     Unspec = 0,
 
     /// Request information about a wiphy (physical wireless device) or dump

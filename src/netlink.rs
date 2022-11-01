@@ -17,6 +17,7 @@ use super::interface::WirelessInterface;
 const NL80211_VERSION: u8 = 1;
 type Neli80211Header = Genlmsghdr<Command, Attribute>;
 
+/// Netlink socket.
 pub struct NlSocket {
     socket: NlSocketHandle,
     nl_type: u16,

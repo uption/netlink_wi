@@ -1,13 +1,31 @@
-pub mod attributes;
-pub mod commands;
+//! A library to retrieve information about wireless hardware in Linux operating
+//! system using netlink protocol.
+//!
+//! ## Usage
+//!
+//! ```rust,no_run
+//! use netlink_wi::NlSocket;
+//!
+//! fn list_interfaces() {
+//!    let mut socket = NlSocket::connect().unwrap();
+//!    let interfaces = socket.list_interfaces().unwrap();
+//!    for interface in interfaces {
+//!        let interface = interface;
+//!        println!("{:#?}", interface);
+//!    }
+//! }
+//! ```
+//!
+//! See more examples in [Github](https://github.com/uption/netlink_wi/tree/master/examples).
+//!
+pub(crate) mod attributes;
+pub(crate) mod commands;
 
-mod error;
 mod interface;
 mod netlink;
 mod station;
 mod wiphy;
 
-pub use error::AttrParseError;
 pub use interface::{
     ChannelWidth, InterfaceType, MacAddress, TransmitQueueStats, WirelessInterface,
 };
