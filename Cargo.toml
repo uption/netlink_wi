@@ -7,10 +7,10 @@ authors = [
 ]
 edition = "2021"
 description = """
-A library and command-line utility to retrieve information about wireless interfaces
+A library to retrieve information about wireless hardware
 in Linux operating system using netlink protocol.
 """
-categories = ["command-line-utilities"]
+categories = ["os::linux-apis"]
 keywords = ["netlink", "linux", "wifi", "nl80211"]
 license = "MIT"
 readme = "README.md"
