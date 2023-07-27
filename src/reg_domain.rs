@@ -29,7 +29,7 @@ impl TryFrom<Attrs<'_, Attribute>> for RegulatoryDomain {
         let mut reg_domain = Self::default();
         let mut reg_rule_attr = Vec::new();
         for attr in handle.iter() {
-            match attr.nla_type.nla_type {
+            match attr.nla_type().nla_type() {
                 Attribute::RegAlpha2 => reg_domain.country_code = attr.get_payload_as_with_len()?,
                 Attribute::DfsRegion => {
                     reg_domain.dfs_region = match attr.get_payload_as::<u8>()? {
@@ -126,7 +126,7 @@ impl TryFrom<Attrs<'_, RegRuleAttr>> for RegulatoryRule {
     fn try_from(handle: Attrs<'_, RegRuleAttr>) -> Result<Self, Self::Error> {
         let mut reg_rule = Self::default();
         for attr in handle.iter() {
-            match attr.nla_type.nla_type {
+            match attr.nla_type().nla_type() {
                 RegRuleAttr::RegRuleFlags => {
                     if let Some(flags) = RegRuleFlags::from_bits(attr.get_payload_as()?) {
                         reg_rule.no_ofdm = flags.contains(RegRuleFlags::NO_OFDM);

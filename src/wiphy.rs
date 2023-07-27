@@ -31,7 +31,7 @@ impl TryFrom<Attrs<'_, Attribute>> for PhysicalDevice {
         let mut wiphy_bands_attr: Option<Attrs<'_, Band>> = None;
 
         for attr in handle.iter() {
-            match attr.nla_type.nla_type {
+            match attr.nla_type().nla_type() {
                 Attribute::Wiphy => device.wiphy_index = attr.get_payload_as()?,
                 Attribute::WiphyName => device.name = attr.get_payload_as_with_len()?,
                 Attribute::Generation => device.generation = attr.get_payload_as()?,
@@ -73,7 +73,7 @@ impl TryFrom<Attrs<'_, Attribute>> for PhysicalDevice {
         }
         if let Some(sub_handle) = wiphy_bands_attr {
             for sub_attr in sub_handle.iter() {
-                match sub_attr.nla_type.nla_type {
+                match sub_attr.nla_type().nla_type() {
                     Band::Band2ghz => {
                         let sub_handle: Attrs<'_, BandAttr> = sub_attr.get_attr_handle()?;
                         device.band_2ghz = Some(sub_handle.try_into()?);
@@ -108,7 +108,7 @@ impl TryFrom<Attrs<'_, BandAttr>> for WifiBand {
     fn try_from(handle: Attrs<'_, BandAttr>) -> Result<Self, Self::Error> {
         let mut band = WifiBand::default();
         for attr in handle.iter() {
-            match attr.nla_type.nla_type {
+            match attr.nla_type().nla_type() {
                 BandAttr::Frequencies => {
                     let sub_handle: Attrs<'_, u16> = attr.get_attr_handle()?;
                     for sub_attr in sub_handle.iter() {
@@ -155,7 +155,7 @@ impl TryFrom<Attrs<'_, FrequencyAttr>> for Frequency {
     fn try_from(handle: Attrs<'_, FrequencyAttr>) -> Result<Self, Self::Error> {
         let mut frequency = Frequency::default();
         for attr in handle.iter() {
-            match attr.nla_type.nla_type {
+            match attr.nla_type().nla_type() {
                 FrequencyAttr::Frequency => {
                     frequency.frequency = attr.get_payload_as()?;
                 }
