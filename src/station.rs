@@ -88,7 +88,7 @@ impl TryFrom<Attrs<'_, Attribute>> for WirelessStation {
         let mut tid_stats_attr: Option<Attrs<'_, u16>> = None;
         let mut bss_param_attr: Option<Attrs<'_, BssParam>> = None;
         for attr in handle.iter() {
-            match attr.nla_type.nla_type {
+            match attr.nla_type().nla_type() {
                 Attribute::Ifindex => station.interface_index = attr.get_payload_as()?,
                 Attribute::Mac => station.mac = attr.get_payload_as()?,
                 Attribute::Generation => station.generation = attr.get_payload_as()?,
@@ -101,7 +101,7 @@ impl TryFrom<Attrs<'_, Attribute>> for WirelessStation {
 
         if let Some(sub_handle) = station_info_attr {
             for sub_attr in sub_handle.iter() {
-                match sub_attr.nla_type.nla_type {
+                match sub_attr.nla_type().nla_type() {
                     StationInfo::Signal => {
                         station.signal = Some(sub_attr.get_payload_as()?);
                     }
@@ -193,8 +193,8 @@ impl TryFrom<Attrs<'_, Attribute>> for WirelessStation {
                 for sub_attr in sub_handle.iter() {
                     let nested_handle = sub_attr.get_attr_handle()?;
                     for tid_attr in nested_handle.iter() {
-                        let mut tid_stats = TrafficIdStats::new(sub_attr.nla_type.nla_type as u8);
-                        match tid_attr.nla_type.nla_type {
+                        let mut tid_stats = TrafficIdStats::new(*sub_attr.nla_type().nla_type());
+                        match tid_attr.nla_type().nla_type() {
                             TidStats::RxMsdu => {
                                 tid_stats.rx_msdu = Some(tid_attr.get_payload_as()?);
                             }
@@ -213,7 +213,7 @@ impl TryFrom<Attrs<'_, Attribute>> for WirelessStation {
                                 debug!("Unhandled tid stats attribute 'TidStats::{unhandled:?}'")
                             }
                         }
-                        all_tid_stats[sub_attr.nla_type.nla_type as usize - 1] = tid_stats;
+                        all_tid_stats[*sub_attr.nla_type().nla_type() as usize - 1] = tid_stats;
                     }
                 }
                 station.tid_stats = Some(all_tid_stats);
@@ -224,7 +224,7 @@ impl TryFrom<Attrs<'_, Attribute>> for WirelessStation {
                 station.bss_short_preamble = Some(false);
                 station.bss_short_slot_time = Some(false);
                 for sub_attr in sub_handle.iter() {
-                    match sub_attr.nla_type.nla_type {
+                    match sub_attr.nla_type().nla_type() {
                         BssParam::CtsProt => {
                             station.bss_cts_protection = Some(true);
                         }
@@ -255,7 +255,7 @@ impl TryFrom<Attrs<'_, Attribute>> for WirelessStation {
 /// Traffic identifier statistics.
 pub struct TrafficIdStats {
     /// TID number 1-16 and 17 for non-QoS traffic.
-    pub tid_number: u8,
+    pub tid_number: u16,
     /// Number of MSDUs received.
     pub rx_msdu: Option<u64>,
     /// Number of MSDUs transmitted or attempted to transmit.
@@ -269,7 +269,7 @@ pub struct TrafficIdStats {
 }
 
 impl TrafficIdStats {
-    pub fn new(tid_number: u8) -> Self {
+    pub fn new(tid_number: u16) -> Self {
         Self {
             tid_number,
             ..Default::default()
@@ -315,7 +315,7 @@ impl TryFrom<Attrs<'_, NlRateInfo>> for RateInfo {
             ru_allocation: None,
         };
         for attr in handle.iter() {
-            match attr.nla_type.nla_type {
+            match attr.nla_type().nla_type() {
                 NlRateInfo::Bitrate => {
                     if bitrate_info.bitrate == 0 {
                         let bitrate: u16 = attr.get_payload_as()?;

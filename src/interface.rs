@@ -57,7 +57,7 @@ impl TryFrom<Attrs<'_, Attribute>> for WirelessInterface {
         let mut interface_type_payload: Option<NlInterfaceType> = None;
         let mut txq_stats_attr: Option<Attrs<'_, TxqStats>> = None;
         for attr in handle.iter() {
-            match attr.nla_type.nla_type {
+            match attr.nla_type().nla_type() {
                 Attribute::Wiphy => interface.wiphy_index = attr.get_payload_as()?,
                 Attribute::Ifindex => {
                     interface.interface_index = attr.get_payload_as()?;
@@ -158,7 +158,7 @@ impl TryFrom<Attrs<'_, Attribute>> for WirelessInterface {
         if let Some(sub_handle) = txq_stats_attr {
             let mut txq_statistics = TransmitQueueStats::default();
             for sub_attr in sub_handle.iter() {
-                match sub_attr.nla_type.nla_type {
+                match sub_attr.nla_type().nla_type() {
                     TxqStats::BacklogBytes => {
                         txq_statistics.backlog_bytes = Some(sub_attr.get_payload_as()?);
                     }
@@ -254,11 +254,11 @@ impl fmt::Display for MacAddress {
     }
 }
 
-impl<'a> FromBytes<'a> for MacAddress {
-    fn from_bytes(buffer: &mut std::io::Cursor<&'a [u8]>) -> Result<Self, DeError> {
+impl FromBytes for MacAddress {
+    fn from_bytes(buffer: &mut std::io::Cursor<impl AsRef<[u8]>>) -> Result<Self, DeError> {
         let address_bytes = buffer
-            .clone()
-            .into_inner()
+            .get_ref()
+            .as_ref()
             .try_into()
             .map_err(|_| DeError::new("Failed to deserialize MAC-address"))?;
         Ok(MacAddress { address_bytes })
