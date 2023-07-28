@@ -264,7 +264,7 @@ impl<'a> FromBytes<'a> for MacAddress {
     }
 }
 
-#[derive(Debug, Copy, Clone)]
+#[derive(Debug, Copy, Clone, PartialEq, Eq)]
 /// Virtual interface type.
 pub enum InterfaceType {
     /// Unspecified type, driver decides.
@@ -319,7 +319,7 @@ impl fmt::Display for InterfaceType {
     }
 }
 
-#[derive(Debug, Copy, Clone)]
+#[derive(Debug, Copy, Clone, PartialEq, Eq)]
 /// Wireless channel width.
 pub enum ChannelWidth {
     Width20NoHT,

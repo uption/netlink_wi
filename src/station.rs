@@ -415,7 +415,7 @@ impl TryFrom<Attrs<'_, NlRateInfo>> for RateInfo {
     }
 }
 
-#[derive(Debug, Clone)]
+#[derive(Debug, Clone, PartialEq, Eq)]
 /// Connection or frame type.
 pub enum ConnectionType {
     /// High Throughput (802.11n).
@@ -440,7 +440,7 @@ impl fmt::Display for ConnectionType {
     }
 }
 
-#[derive(Debug, Clone)]
+#[derive(Debug, Clone, PartialEq, Eq)]
 /// Wifi connection guard intervals.
 pub enum GuardIntervals {
     /// 0.4 microseconds.
@@ -455,7 +455,7 @@ pub enum GuardIntervals {
     Unknown,
 }
 
-#[derive(Debug, Clone)]
+#[derive(Debug, Clone, PartialEq, Eq)]
 /// HE RU allocation values.
 pub enum HeRuAllocation {
     /// 26-tone RU allocation.
