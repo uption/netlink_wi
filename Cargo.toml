@@ -25,3 +25,6 @@ path = "src/lib.rs"
 log = "0.4"
 neli = "0.6.3"
 neli-proc-macros = "0.1.3"
+
+[dev-dependencies]
+simple_logger = "4.2.0"
