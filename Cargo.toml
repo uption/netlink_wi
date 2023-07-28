@@ -15,7 +15,7 @@ keywords = ["netlink", "linux", "wifi", "nl80211"]
 license = "MIT"
 readme = "README.md"
 repository = "https://github.com/uption/netlink_wi"
-exclude = [".github/*"]
+include = ["**/*.rs", "Cargo.toml", "LICENSE"]
 
 [lib]
 name = "netlink_wi"
