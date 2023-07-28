@@ -72,7 +72,7 @@ impl TryFrom<Attrs<'_, Attribute>> for WirelessInterface {
                 Attribute::WiphyFreq => {
                     interface.frequency = Some(attr.get_payload_as()?);
                 }
-                Attribute::WiphyChannelType => (), // Attribute is deprecated.
+                Attribute::WiphyChannelType => (), // WiphyChannelType is deprecated.
                 Attribute::WiphyFreqOffset => {
                     interface.frequency_offset = Some(attr.get_payload_as()?);
                 }

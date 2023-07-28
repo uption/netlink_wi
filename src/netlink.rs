@@ -8,6 +8,7 @@ use neli::nl::{NlPayload, Nlmsghdr};
 use neli::socket::NlSocketHandle;
 use neli::types::GenlBuffer;
 
+use crate::reg_domain::RegulatoryDomain;
 use crate::station::WirelessStation;
 use crate::wiphy::PhysicalDevice;
 
@@ -105,6 +106,34 @@ impl NlSocket {
             match response.nl_payload {
                 NlPayload::Err(e) => {
                     error!("Error when reading GetWiphy response: {e}");
+                    break;
+                }
+                NlPayload::Payload(payload) => {
+                    let handle = payload.get_attr_handle();
+                    responses.push(handle.try_into()?);
+                }
+                NlPayload::Empty | NlPayload::Ack(_) => (),
+            };
+        }
+        Ok(responses)
+    }
+
+    pub fn get_regulatory_domain(&mut self) -> Result<Vec<RegulatoryDomain>, NlError> {
+        let nl_payload = Genlmsghdr::<Command, Attribute>::new(
+            Command::GetReg,
+            NL80211_VERSION,
+            GenlBuffer::new(),
+        );
+
+        let msg = self.build_header(nl_payload, &[NlmF::Request, NlmF::Dump]);
+
+        self.socket.send(msg)?;
+        let mut responses = Vec::new();
+        for response in self.socket.iter::<Nlmsg, Neli80211Header>(false) {
+            let response = response.map_err(NlError::new)?;
+            match response.nl_payload {
+                NlPayload::Err(e) => {
+                    error!("Error when reading GetReg response: {e}");
                     break;
                 }
                 NlPayload::Payload(payload) => {

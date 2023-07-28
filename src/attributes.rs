@@ -1,3 +1,6 @@
+use std::fmt;
+
+use bitflags::bitflags;
 use neli::{
     attr::AttrHandle,
     consts::genl::NlAttrType,
@@ -738,7 +741,7 @@ impl NlAttrType for Band {}
 
 /// Frequency attributes.
 ///
-/// enum from:
+/// nl80211_frequency_attr enum from:
 /// https://github.com/torvalds/linux/blob/master/include/uapi/linux/nl80211.h
 #[neli_enum(serialized_type = "u16")]
 pub(crate) enum FrequencyAttr {
@@ -809,3 +812,69 @@ pub(crate) enum FrequencyAttr {
 }
 
 impl NlAttrType for FrequencyAttr {}
+
+/// Frequency attributes.
+///
+/// nl80211_reg_rule_attr enum from:
+/// https://github.com/torvalds/linux/blob/master/include/uapi/linux/nl80211.h
+#[neli_enum(serialized_type = "u16")]
+pub(crate) enum RegRuleAttr {
+    /// Attribute number 0 is reserved.
+    Invalid = 0,
+    /// A set of flags which specify additional considerations for a given
+    /// frequency range. These are the enum RegRuleFlags.
+    RegRuleFlags = 1,
+    /// Starting frequencry for the regulatory rule in KHz.
+    /// This is not a center of frequency but an actual regulatory band edge.
+    FreqRangeStart = 2,
+    /// Ending frequency for the regulatory rule in KHz.
+    /// This is not a center a frequency but an actual regulatory band edge.
+    FreqRangeEnd = 3,
+    /// Maximum allowed bandwidth for this frequency range, in KHz.
+    FreqRangeMaxBw = 4,
+    /// The maximum allowed antenna gain for a given frequency range.
+    /// The value is in mBi (100 * dBi). If you don't have one then don't
+    /// send this.
+    PowerRuleMaxAntGain = 5,
+    /// The maximum allowed EIRP for a given frequency range.
+    /// The value is in mBm (100 * dBm).
+    PowerRuleMaxEirp = 6,
+    /// DFS CAC time in milliseconds.
+    /// If not present or 0 default CAC time will be used.
+    DfsCacTime = 7,
+}
+
+impl NlAttrType for RegRuleAttr {}
+
+bitflags! {
+    /// Regulatory rule flags.
+    ///
+    /// nl80211_reg_rule_flags enum from:
+    /// https://github.com/torvalds/linux/blob/master/include/uapi/linux/nl80211.h
+    pub struct RegRuleFlags: u32 {
+        const NO_OFDM       = 1<<0;
+        const NO_CCK        = 1<<1;
+        const NO_INDOOR     = 1<<2;
+        const NO_OUTDOOR    = 1<<3;
+        const DFS           = 1<<4;
+        const PTP_ONLY      = 1<<5;
+        const PTMP_ONLY     = 1<<6;
+        const NO_IR         = 1<<7;
+        const __NO_IBSS     = 1<<8;
+        const AUTO_BW       = 1<<11;
+        const IR_CONCURRENT = 1<<12;
+        const NO_HT40MINUS  = 1<<13;
+        const NO_HT40PLUS   = 1<<14;
+        const NO_80MHZ      = 1<<15;
+        const NO_160MHZ     = 1<<16;
+        const NO_HE         = 1<<17;
+        const NO_320MHZ     = 1<<18;
+        const NO_EHT        = 1<<19;
+    }
+}
+
+impl fmt::Debug for RegRuleFlags {
+    fn fmt(&self, f: &mut fmt::Formatter) -> fmt::Result {
+        fmt::Debug::fmt(&self.0, f)
+    }
+}

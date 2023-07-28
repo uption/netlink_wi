@@ -10,7 +10,6 @@
 //!    let mut socket = NlSocket::connect().unwrap();
 //!    let interfaces = socket.list_interfaces().unwrap();
 //!    for interface in interfaces {
-//!        let interface = interface;
 //!        println!("{:#?}", interface);
 //!    }
 //! }
@@ -23,6 +22,7 @@ pub(crate) mod commands;
 
 mod interface;
 mod netlink;
+mod reg_domain;
 mod station;
 mod wiphy;
 

@@ -1,3 +1,4 @@
+/// Print physical wireless device information.
 use log::LevelFilter;
 use netlink_wi::NlSocket;
 use simple_logger::SimpleLogger;
@@ -10,12 +11,8 @@ fn main() {
         .unwrap();
 
     let mut socket = NlSocket::connect().unwrap();
-    let interfaces = socket.list_interfaces().unwrap();
-    for interface in interfaces {
-        let interface = interface;
-        let stations = socket.list_stations(interface.interface_index).unwrap();
-        for station in stations {
-            println!("{:#?}", station);
-        }
+    let domains = socket.get_regulatory_domain().unwrap();
+    for domain in domains {
+        println!("{:#?}", domain);
     }
 }
