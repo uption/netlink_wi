@@ -353,7 +353,7 @@ impl NlAttrType for Attribute {}
 ///
 /// nl80211_iftype enum from:
 /// https://github.com/torvalds/linux/blob/master/include/uapi/linux/nl80211.h
-#[neli_enum(serialized_type = "u16")]
+#[neli_enum(serialized_type = "u32")]
 pub(crate) enum InterfaceType {
     /// Unspecified type, driver decides.
     Unspecified = 0,
@@ -385,8 +385,6 @@ pub(crate) enum InterfaceType {
     /// NAN device interface type (not a netdev).
     Nan = 12,
 }
-
-impl NlAttrType for InterfaceType {}
 
 /// Nl80211 per TXQ (transmit queue) statistics.
 ///
