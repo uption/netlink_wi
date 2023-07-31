@@ -615,7 +615,7 @@ impl NlAttrType for BssParam {}
 ///
 /// nl80211_he_gi enum from:
 /// https://github.com/torvalds/linux/blob/master/include/uapi/linux/nl80211.h
-#[neli_enum(serialized_type = "u16")]
+#[neli_enum(serialized_type = "u8")]
 pub(crate) enum HeGuardInterval {
     /// 0.8 usec
     Usec0_8 = 0,
@@ -624,8 +624,6 @@ pub(crate) enum HeGuardInterval {
     /// 3.2 usec
     Usec3_2 = 2,
 }
-
-impl NlAttrType for HeGuardInterval {}
 
 /// Nl80211 HE RU allocation values.
 ///
