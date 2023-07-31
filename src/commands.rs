@@ -18,6 +18,8 @@ pub(crate) enum Command {
     /// Request an interface's configuration. Either a dump request for all
     /// interfaces or a specific get with a single NL80211_ATTR_IFINDEX is supported.
     GetInterface = 5,
+    /// Set type of a virtual interface,
+    /// requires NL80211_ATTR_IFINDEX and NL80211_ATTR_IFTYPE.
     SetInterface = 6,
     NewInterface = 7,
     DelInterface = 8,
@@ -56,6 +58,7 @@ pub(crate) enum Command {
     /// reserved; not used
     SetMgmtExtraIe = 30,
 
+    ///  Ask the wireless core to send us its currently set regulatory domain.
     GetReg = 31,
 
     GetScan = 32,

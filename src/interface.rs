@@ -297,6 +297,27 @@ pub enum InterfaceType {
     Unknown,
 }
 
+impl From<InterfaceType> for NlInterfaceType {
+    fn from(value: InterfaceType) -> Self {
+        match value {
+            InterfaceType::Unspecified => NlInterfaceType::Unspecified,
+            InterfaceType::Adhoc => NlInterfaceType::Adhoc,
+            InterfaceType::Station => NlInterfaceType::Station,
+            InterfaceType::AccessPoint => NlInterfaceType::Ap,
+            InterfaceType::ApVlan => NlInterfaceType::ApVlan,
+            InterfaceType::Wds => NlInterfaceType::Wds,
+            InterfaceType::Monitor => NlInterfaceType::Monitor,
+            InterfaceType::MeshPoint => NlInterfaceType::MeshPoint,
+            InterfaceType::P2pClient => NlInterfaceType::P2pClient,
+            InterfaceType::P2pGroupOwner => NlInterfaceType::P2pGo,
+            InterfaceType::P2pDevice => NlInterfaceType::P2pDevice,
+            InterfaceType::Ocb => NlInterfaceType::Ocb,
+            InterfaceType::NotNetdev => NlInterfaceType::Nan,
+            InterfaceType::Unknown => NlInterfaceType::Unspecified,
+        }
+    }
+}
+
 impl fmt::Display for InterfaceType {
     fn fmt(&self, f: &mut fmt::Formatter<'_>) -> fmt::Result {
         let interface_type = match self {
