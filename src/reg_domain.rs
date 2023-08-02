@@ -33,8 +33,8 @@ impl TryFrom<Attrs<'_, Attribute>> for RegulatoryDomain {
                 Attribute::RegAlpha2 => reg_domain.country_code = attr.get_payload_as_with_len()?,
                 Attribute::DfsRegion => {
                     reg_domain.dfs_region = match attr.get_payload_as::<u8>()? {
-                        1 => DfsRegion::FCC,
-                        2 => DfsRegion::ETSI,
+                        1 => DfsRegion::Fcc,
+                        2 => DfsRegion::Etsi,
                         3 => DfsRegion::JP,
                         _ => DfsRegion::Unset,
                     }
@@ -173,9 +173,9 @@ pub enum DfsRegion {
     #[default]
     Unset,
     /// Country follows DFS master rules from FCC.
-    FCC,
+    Fcc,
     /// Country follows DFS master rules from ETSI.
-    ETSI,
+    Etsi,
     /// Country follows DFS master rules from JP/MKK/Telec.
     JP,
 }
