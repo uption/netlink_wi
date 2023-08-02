@@ -58,7 +58,10 @@ pub(crate) enum Attribute {
     BssShortSlotTime = 30,
     HtCapability = 31,
     SupportedIftypes = 32,
+    /// ISO-3166-alpha2 country code for which the current regulatory domain
+    /// should be set to or is already set to.
     RegAlpha2 = 33,
+    /// A nested array of regulatory domain regulatory rules (`RegRuleAttr`).
     RegRules = 34,
     MeshConfig = 35,
     BssBasicRates = 36,
@@ -183,6 +186,8 @@ pub(crate) enum Attribute {
     FeatureFlags = 143,
     ProbeRespOffload = 144,
     ProbeResp = 145,
+    /// Region for regulatory rules which this country abides to when initiating
+    /// radiation on DFS channels. A country maps to one DFS region.
     DfsRegion = 146,
     DisableHt = 147,
     HtCapabilityMask = 148,
@@ -258,6 +263,8 @@ pub(crate) enum Attribute {
     SmpsMode = 213,
     OperClass = 214,
     MacMask = 215,
+    /// Flag attribute indicating this device is self-managing its regulatory
+    /// information.
     WiphySelfManagedReg = 216,
     ExtFeatures = 217,
     SurveyRadioStats = 218,

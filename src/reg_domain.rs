@@ -13,6 +13,9 @@ use crate::attributes::{Attrs, RegRuleAttr, RegRuleFlags};
 pub struct RegulatoryDomain {
     /// ISO/IEC 3166-1 alpha2 country code.
     pub country_code: String,
+    /// Region for regulatory rules which this country abides to when initiating
+    /// radiation on DFS channels.
+    pub dfs_region: DfsRegion,
     /// Device index.
     pub wiphy_index: Option<u32>,
     /// Indicates if device is self-managing its regulatory information.
@@ -28,6 +31,14 @@ impl TryFrom<Attrs<'_, Attribute>> for RegulatoryDomain {
         for attr in handle.iter() {
             match attr.nla_type.nla_type {
                 Attribute::RegAlpha2 => reg_domain.country_code = attr.get_payload_as_with_len()?,
+                Attribute::DfsRegion => {
+                    reg_domain.dfs_region = match attr.get_payload_as::<u8>()? {
+                        1 => DfsRegion::FCC,
+                        2 => DfsRegion::ETSI,
+                        3 => DfsRegion::JP,
+                        _ => DfsRegion::Unset,
+                    }
+                }
                 Attribute::Wiphy => reg_domain.wiphy_index = Some(attr.get_payload_as()?),
                 Attribute::RegRules => {
                     let sub_handle: Attrs<'_, u16> = attr.get_attr_handle()?;
@@ -152,4 +163,19 @@ impl TryFrom<Attrs<'_, RegRuleAttr>> for RegulatoryRule {
         }
         Ok(reg_rule)
     }
+}
+
+#[derive(Debug, Clone, PartialEq, Eq, Default)]
+/// Region for regulatory rules which this country abides to when initiating
+/// radiation on DFS channels.
+pub enum DfsRegion {
+    /// Country has no DFS master region specified.
+    #[default]
+    Unset,
+    /// Country follows DFS master rules from FCC.
+    FCC,
+    /// Country follows DFS master rules from ETSI.
+    ETSI,
+    /// Country follows DFS master rules from JP/MKK/Telec.
+    JP,
 }
