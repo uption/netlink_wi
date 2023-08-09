@@ -26,6 +26,7 @@ mod reg_domain;
 mod station;
 mod wiphy;
 
+pub use crate::attributes::MonitorFlags;
 pub use interface::{
     ChannelWidth, InterfaceType, MacAddress, TransmitQueueStats, WirelessInterface,
 };

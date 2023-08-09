@@ -1,13 +1,18 @@
-use log::error;
+use std::fmt;
+use std::io::Cursor;
+
+use log::{debug, error};
 use neli::consts::genl::{CtrlAttr, CtrlCmd};
-use neli::consts::nl::{GenlId, NlmF, NlmFFlags, Nlmsg};
+use neli::consts::nl::{GenlId, NlType, NlmF, NlmFFlags, Nlmsg};
 use neli::consts::socket::NlFamily;
-use neli::err::NlError;
+use neli::err::{NlError, SerError};
 use neli::genl::{Genlmsghdr, Nlattr};
 use neli::nl::{NlPayload, Nlmsghdr};
 use neli::socket::NlSocketHandle;
-use neli::types::GenlBuffer;
+use neli::types::{Buffer, GenlBuffer};
+use neli::ToBytes;
 
+use crate::attributes::MonitorFlags;
 use crate::reg_domain::RegulatoryDomain;
 use crate::station::WirelessStation;
 use crate::wiphy::PhysicalDevice;
@@ -43,7 +48,7 @@ impl NlSocket {
         );
 
         let msg = self.build_header(nl_payload, &[NlmF::Request, NlmF::Dump]);
-        self.socket.send(msg)?;
+        self.send(msg)?;
 
         let mut responses = Vec::new();
         for response in self.socket.iter::<Nlmsg, Neli80211Header>(false) {
@@ -78,13 +83,32 @@ impl NlSocket {
             );
             attrs
         };
+        self.send_set_interface(attrs)
+    }
 
+    pub fn set_monitor_flags(
+        &mut self,
+        if_index: u32,
+        flags: Vec<MonitorFlags>,
+    ) -> Result<(), NlError> {
+        let attrs = {
+            let mut attrs = GenlBuffer::new();
+            attrs.push(Nlattr::new(false, false, Attribute::Ifindex, if_index).unwrap());
+            attrs.push(
+                Nlattr::new(false, false, Attribute::Iftype, NlInterfaceType::Monitor).unwrap(),
+            );
+            attrs.push(Nlattr::new(false, false, Attribute::MntrFlags, flags).unwrap());
+            attrs
+        };
+        self.send_set_interface(attrs)
+    }
+
+    fn send_set_interface(&mut self, attrs: GenlBuffer<Attribute, Buffer>) -> Result<(), NlError> {
         let nl_payload =
             Genlmsghdr::<Command, Attribute>::new(Command::SetInterface, NL80211_VERSION, attrs);
-
         let msg = self.build_header(nl_payload, &[NlmF::Request, NlmF::Ack]);
 
-        self.socket.send(msg)?;
+        self.send(msg)?;
         for response in self.socket.iter::<Nlmsg, Neli80211Header>(false) {
             let response = response.map_err(NlError::new)?;
             match response.nl_payload {
@@ -92,10 +116,7 @@ impl NlSocket {
                     error!("Error when reading response: {e}");
                     break;
                 }
-                NlPayload::Payload(payload) => {
-                    dbg!(&payload);
-                }
-                NlPayload::Empty | NlPayload::Ack(_) => (),
+                NlPayload::Payload(_) | NlPayload::Empty | NlPayload::Ack(_) => (),
             };
         }
         Ok(())
@@ -113,7 +134,7 @@ impl NlSocket {
 
         let msg = self.build_header(nl_payload, &[NlmF::Request, NlmF::Dump]);
 
-        self.socket.send(msg)?;
+        self.send(msg)?;
         let mut responses = Vec::new();
         for response in self.socket.iter::<Nlmsg, Neli80211Header>(false) {
             let response = response.map_err(NlError::new)?;
@@ -139,7 +160,7 @@ impl NlSocket {
             GenlBuffer::new(),
         );
         let msg = self.build_header(nl_payload, &[NlmF::Request, NlmF::Dump]);
-        self.socket.send(msg)?;
+        self.send(msg)?;
         let mut responses = Vec::new();
         for response in self.socket.iter::<Nlmsg, Neli80211Header>(false) {
             let response = response.map_err(NlError::new)?;
@@ -167,7 +188,7 @@ impl NlSocket {
 
         let msg = self.build_header(nl_payload, &[NlmF::Request, NlmF::Dump]);
 
-        self.socket.send(msg)?;
+        self.send(msg)?;
         let mut responses = Vec::new();
         for response in self.socket.iter::<Nlmsg, Neli80211Header>(false) {
             let response = response.map_err(NlError::new)?;
@@ -184,6 +205,20 @@ impl NlSocket {
             };
         }
         Ok(responses)
+    }
+
+    fn send<T, P>(&mut self, msg: Nlmsghdr<T, P>) -> Result<(), SerError>
+    where
+        T: NlType + fmt::Debug,
+        P: ToBytes + fmt::Debug,
+    {
+        if cfg!(debug_assertions) {
+            let mut b: Cursor<Vec<u8>> = Cursor::new(vec![0; 15]);
+            msg.nl_payload.to_bytes(&mut b).unwrap();
+            let octets: String = b.get_ref().iter().map(|v| format!("{:02x} ", v)).collect();
+            debug!("[PAYLOAD] {octets}");
+        }
+        self.socket.send(msg)
     }
 
     fn build_header<P: neli::Size>(&self, nl_payload: P, flags: &[NlmF]) -> Nlmsghdr<u16, P> {

@@ -881,3 +881,27 @@ impl fmt::Debug for RegRuleFlags {
         fmt::Debug::fmt(&self.0, f)
     }
 }
+
+/// Monitor mode configuration flags.
+///
+/// nl80211_mntr_flags enum from:
+/// https://github.com/torvalds/linux/blob/master/include/uapi/linux/nl80211.h
+#[neli_enum(serialized_type = "u16")]
+pub enum MonitorFlags {
+    /// Attribute number 0 is reserved.
+    Invalid = 0,
+    /// Pass frames with bad FCS.
+    FcsFail = 1,
+    /// Pass frames with bad PLCP.
+    PlcpFail = 2,
+    /// Pass control frames.
+    Control = 3,
+    /// Disable BSSID filtering.
+    OtherBss = 4,
+    /// Report frames after processing. Overrides all other flags.
+    CookFrames = 5,
+    /// Use the configured MAC address and ACK incoming unicast packets.
+    Active = 6,
+}
+
+impl NlAttrType for MonitorFlags {}
