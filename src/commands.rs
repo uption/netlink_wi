@@ -116,6 +116,14 @@ pub(crate) enum Command {
     SetCqm = 63,
     NotifyCqm = 64,
 
+    /// Set the channel (using NL80211_ATTR_WIPHY_FREQ and the attributes
+    /// determining channel width) the given interface (identifed by
+    /// NL80211_ATTR_IFINDEX) shall operate on. In case multiple channels are
+    /// supported by the device, the mechanism with which it switches channels
+    /// is implementation-defined. When a monitor interface is given, it can
+    /// only switch channel while no other interfaces are operating to avoid
+    /// disturbing the operation of any other interfaces, and other interfaces
+    /// will again take precedence when they are used.
     SetChannel = 65,
     SetWdsPeer = 66,
 

@@ -905,3 +905,27 @@ pub enum MonitorFlags {
 }
 
 impl NlAttrType for MonitorFlags {}
+
+/// Channel width definitions.
+///
+/// These values are used with the `Attribute.ChannelWidth` attribute.
+///
+/// nl80211_chan_width enum from:
+/// https://github.com/torvalds/linux/blob/master/include/uapi/linux/nl80211.h
+#[neli_enum(serialized_type = "u32")]
+pub(crate) enum ChannelWidth {
+    Width20NoHT = 0,
+    Width20 = 1,
+    Width40 = 2,
+    Width80 = 3,
+    Width80P80 = 4,
+    Width160 = 5,
+    Width5 = 6,
+    Width10 = 7,
+    Width1 = 8,
+    Width2 = 9,
+    Width4 = 10,
+    Width8 = 11,
+    Width16 = 12,
+    Width320 = 13,
+}

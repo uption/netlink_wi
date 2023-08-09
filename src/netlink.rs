@@ -16,9 +16,10 @@ use crate::attributes::MonitorFlags;
 use crate::reg_domain::RegulatoryDomain;
 use crate::station::WirelessStation;
 use crate::wiphy::PhysicalDevice;
-use crate::InterfaceType;
+use crate::{ChannelWidth, InterfaceType};
 
 use super::attributes::Attribute;
+use super::attributes::ChannelWidth as NlChannelWidth;
 use super::attributes::InterfaceType as NlInterfaceType;
 use super::commands::Command;
 use super::interface::WirelessInterface;
@@ -106,6 +107,45 @@ impl NlSocket {
     fn send_set_interface(&mut self, attrs: GenlBuffer<Attribute, Buffer>) -> Result<(), NlError> {
         let nl_payload =
             Genlmsghdr::<Command, Attribute>::new(Command::SetInterface, NL80211_VERSION, attrs);
+        let msg = self.build_header(nl_payload, &[NlmF::Request, NlmF::Ack]);
+
+        self.send(msg)?;
+        for response in self.socket.iter::<Nlmsg, Neli80211Header>(false) {
+            let response = response.map_err(NlError::new)?;
+            match response.nl_payload {
+                NlPayload::Err(e) => {
+                    error!("Error when reading response: {e}");
+                    break;
+                }
+                NlPayload::Payload(_) | NlPayload::Empty | NlPayload::Ack(_) => (),
+            };
+        }
+        Ok(())
+    }
+
+    pub fn set_channel(
+        &mut self,
+        if_index: u32,
+        freq: u32,
+        width: ChannelWidth,
+    ) -> Result<(), NlError> {
+        let attrs = {
+            let mut attrs = GenlBuffer::new();
+            attrs.push(Nlattr::new(false, false, Attribute::Ifindex, if_index).unwrap());
+            attrs.push(Nlattr::new(false, false, Attribute::WiphyFreq, freq).unwrap());
+            attrs.push(
+                Nlattr::new(
+                    false,
+                    false,
+                    Attribute::ChannelWidth,
+                    Into::<NlChannelWidth>::into(width),
+                )
+                .unwrap(),
+            );
+            attrs
+        };
+        let nl_payload =
+            Genlmsghdr::<Command, Attribute>::new(Command::SetChannel, NL80211_VERSION, attrs);
         let msg = self.build_header(nl_payload, &[NlmF::Request, NlmF::Ack]);
 
         self.send(msg)?;

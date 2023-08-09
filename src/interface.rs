@@ -6,6 +6,7 @@ use neli::attr::Attribute as NeliAttribute;
 use neli::err::DeError;
 use neli::FromBytes;
 
+use super::attributes::ChannelWidth as NlChannelWidth;
 use super::attributes::InterfaceType as NlInterfaceType;
 use super::attributes::{Attribute, TxqStats};
 use crate::attributes::Attrs;
@@ -35,7 +36,7 @@ pub struct WirelessInterface {
     /// Center frequency of the second part of the channel, used only for 80+80 MHz bandwidth.
     pub center_frequency2: Option<u32>,
     /// Wireless channel width.
-    pub channel_width: Option<ChannelWidth>,
+    pub channel_width: ChannelWidth,
     /// Transmit power level (s16) in dBm.
     pub tx_power: Option<u32>,
     /// Wireless device identifier, used for pseudo-devices that don't have a netdev.
@@ -83,8 +84,8 @@ impl TryFrom<Attrs<'_, Attribute>> for WirelessInterface {
                     interface.center_frequency2 = Some(attr.get_payload_as()?);
                 }
                 Attribute::ChannelWidth => {
-                    let attr_channel_width: u32 = attr.get_payload_as()?;
-                    interface.channel_width = Some(attr_channel_width.into());
+                    let attr_channel_width: NlChannelWidth = attr.get_payload_as()?;
+                    interface.channel_width = attr_channel_width.into();
                 }
                 Attribute::WiphyTxPowerLevel => {
                     interface.tx_power = Some(attr.get_payload_as()?);
@@ -340,7 +341,7 @@ impl fmt::Display for InterfaceType {
     }
 }
 
-#[derive(Debug, Copy, Clone, PartialEq, Eq)]
+#[derive(Debug, Copy, Clone, PartialEq, Eq, Default)]
 /// Wireless channel width.
 pub enum ChannelWidth {
     Width20NoHT,
@@ -356,47 +357,51 @@ pub enum ChannelWidth {
     Width4,
     Width8,
     Width16,
+    Width320,
+    #[default]
     Unknown,
 }
 
-impl From<u32> for ChannelWidth {
-    fn from(attr_channel_width: u32) -> Self {
+impl From<ChannelWidth> for NlChannelWidth {
+    fn from(attr_channel_width: ChannelWidth) -> Self {
         match attr_channel_width {
-            0 => ChannelWidth::Width20NoHT,
-            1 => ChannelWidth::Width20,
-            2 => ChannelWidth::Width40,
-            3 => ChannelWidth::Width80,
-            4 => ChannelWidth::Width80P80,
-            5 => ChannelWidth::Width160,
-            6 => ChannelWidth::Width5,
-            7 => ChannelWidth::Width10,
-            8 => ChannelWidth::Width1,
-            9 => ChannelWidth::Width2,
-            10 => ChannelWidth::Width4,
-            11 => ChannelWidth::Width8,
-            12 => ChannelWidth::Width16,
-            _ => ChannelWidth::Unknown,
+            ChannelWidth::Width20NoHT => NlChannelWidth::Width20NoHT,
+            ChannelWidth::Width20 => NlChannelWidth::Width20,
+            ChannelWidth::Width40 => NlChannelWidth::Width40,
+            ChannelWidth::Width80 => NlChannelWidth::Width80,
+            ChannelWidth::Width80P80 => NlChannelWidth::Width80P80,
+            ChannelWidth::Width160 => NlChannelWidth::Width160,
+            ChannelWidth::Width5 => NlChannelWidth::Width5,
+            ChannelWidth::Width10 => NlChannelWidth::Width10,
+            ChannelWidth::Width1 => NlChannelWidth::Width1,
+            ChannelWidth::Width2 => NlChannelWidth::Width2,
+            ChannelWidth::Width4 => NlChannelWidth::Width4,
+            ChannelWidth::Width8 => NlChannelWidth::Width8,
+            ChannelWidth::Width16 => NlChannelWidth::Width16,
+            ChannelWidth::Width320 => NlChannelWidth::Width320,
+            ChannelWidth::Unknown => NlChannelWidth::Width20NoHT,
         }
     }
 }
 
-impl From<ChannelWidth> for u32 {
-    fn from(attr_channel_width: ChannelWidth) -> Self {
+impl From<NlChannelWidth> for ChannelWidth {
+    fn from(attr_channel_width: NlChannelWidth) -> Self {
         match attr_channel_width {
-            ChannelWidth::Width20NoHT => 20,
-            ChannelWidth::Width20 => 20,
-            ChannelWidth::Width40 => 40,
-            ChannelWidth::Width80 => 80,
-            ChannelWidth::Width80P80 => 80,
-            ChannelWidth::Width160 => 160,
-            ChannelWidth::Width5 => 5,
-            ChannelWidth::Width10 => 10,
-            ChannelWidth::Width1 => 1,
-            ChannelWidth::Width2 => 2,
-            ChannelWidth::Width4 => 4,
-            ChannelWidth::Width8 => 8,
-            ChannelWidth::Width16 => 16,
-            ChannelWidth::Unknown => 0,
+            NlChannelWidth::Width20NoHT => ChannelWidth::Width20NoHT,
+            NlChannelWidth::Width20 => ChannelWidth::Width20,
+            NlChannelWidth::Width40 => ChannelWidth::Width40,
+            NlChannelWidth::Width80 => ChannelWidth::Width80,
+            NlChannelWidth::Width80P80 => ChannelWidth::Width80P80,
+            NlChannelWidth::Width160 => ChannelWidth::Width160,
+            NlChannelWidth::Width5 => ChannelWidth::Width5,
+            NlChannelWidth::Width10 => ChannelWidth::Width10,
+            NlChannelWidth::Width1 => ChannelWidth::Width1,
+            NlChannelWidth::Width2 => ChannelWidth::Width2,
+            NlChannelWidth::Width4 => ChannelWidth::Width4,
+            NlChannelWidth::Width8 => ChannelWidth::Width8,
+            NlChannelWidth::Width16 => ChannelWidth::Width16,
+            NlChannelWidth::Width320 => ChannelWidth::Width320,
+            NlChannelWidth::UnrecognizedConst(_) => ChannelWidth::Unknown,
         }
     }
 }
@@ -417,6 +422,7 @@ impl fmt::Display for ChannelWidth {
             ChannelWidth::Width4 => "4 MHz OFDM",
             ChannelWidth::Width8 => "8 MHz OFDM",
             ChannelWidth::Width16 => "16 MHz OFDM",
+            ChannelWidth::Width320 => "320 MHz",
             ChannelWidth::Unknown => "Unknown channel width",
         };
         write!(f, "{channel_width}")
