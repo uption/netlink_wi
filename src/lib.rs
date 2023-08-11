@@ -20,17 +20,11 @@
 pub(crate) mod attributes;
 pub(crate) mod commands;
 
-mod interface;
+pub mod interface;
 mod netlink;
-mod reg_domain;
-mod station;
-mod wiphy;
+pub mod reg_domain;
+pub mod station;
+pub mod wiphy;
 
 pub use crate::attributes::MonitorFlags;
-pub use interface::{
-    ChannelWidth, InterfaceType, MacAddress, TransmitQueueStats, WirelessInterface,
-};
 pub use netlink::NlSocket;
-pub use station::{
-    ConnectionType, GuardIntervals, HeRuAllocation, RateInfo, TrafficIdStats, WirelessStation,
-};

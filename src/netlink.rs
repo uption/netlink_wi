@@ -13,10 +13,10 @@ use neli::types::{Buffer, GenlBuffer};
 use neli::ToBytes;
 
 use crate::attributes::MonitorFlags;
+use crate::interface::{ChannelWidth, InterfaceType};
 use crate::reg_domain::RegulatoryDomain;
 use crate::station::WirelessStation;
 use crate::wiphy::PhysicalDevice;
-use crate::{ChannelWidth, InterfaceType};
 
 use super::attributes::Attribute;
 use super::attributes::ChannelWidth as NlChannelWidth;
