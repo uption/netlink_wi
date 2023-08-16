@@ -22,9 +22,11 @@ pub(crate) mod commands;
 
 pub mod interface;
 mod netlink;
+mod netlink_async;
 pub mod reg_domain;
 pub mod station;
 pub mod wiphy;
 
 pub use crate::attributes::MonitorFlags;
 pub use netlink::NlSocket;
+pub use netlink_async::AsyncNlSocket;
