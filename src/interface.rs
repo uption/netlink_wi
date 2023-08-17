@@ -49,10 +49,10 @@ pub struct WirelessInterface {
     pub txq_statistics: Option<TransmitQueueStats>,
 }
 
-impl TryFrom<Attrs<'_, Attribute>> for WirelessInterface {
+impl TryFrom<&Attrs<'_, Attribute>> for WirelessInterface {
     type Error = DeError;
 
-    fn try_from(handle: Attrs<'_, Attribute>) -> Result<Self, Self::Error> {
+    fn try_from(handle: &Attrs<'_, Attribute>) -> Result<Self, Self::Error> {
         let mut interface = Self::default();
         let mut interface_type_payload: Option<NlInterfaceType> = None;
         let mut txq_stats_attr: Option<Attrs<'_, TxqStats>> = None;

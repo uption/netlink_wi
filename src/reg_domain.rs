@@ -22,10 +22,10 @@ pub struct RegulatoryDomain {
     pub self_managed: bool,
 }
 
-impl TryFrom<Attrs<'_, Attribute>> for RegulatoryDomain {
+impl TryFrom<&Attrs<'_, Attribute>> for RegulatoryDomain {
     type Error = DeError;
 
-    fn try_from(handle: Attrs<'_, Attribute>) -> Result<Self, Self::Error> {
+    fn try_from(handle: &Attrs<'_, Attribute>) -> Result<Self, Self::Error> {
         let mut reg_domain = Self::default();
         let mut reg_rule_attr = Vec::new();
         for attr in handle.iter() {

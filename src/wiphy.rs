@@ -68,10 +68,10 @@ impl PhysicalDevice {
     }
 }
 
-impl TryFrom<Attrs<'_, Attribute>> for PhysicalDevice {
+impl TryFrom<&Attrs<'_, Attribute>> for PhysicalDevice {
     type Error = DeError;
 
-    fn try_from(handle: Attrs<'_, Attribute>) -> Result<Self, Self::Error> {
+    fn try_from(handle: &Attrs<'_, Attribute>) -> Result<Self, Self::Error> {
         let mut device = PhysicalDevice::default();
         let mut wiphy_bands_attr: Option<Attrs<'_, Band>> = None;
 

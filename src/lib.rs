@@ -20,13 +20,14 @@
 pub(crate) mod attributes;
 pub(crate) mod commands;
 
+mod asynchronous;
 pub mod interface;
 mod netlink;
-mod netlink_async;
 pub mod reg_domain;
 pub mod station;
+mod synchronous;
 pub mod wiphy;
 
 pub use crate::attributes::MonitorFlags;
-pub use netlink::NlSocket;
-pub use netlink_async::AsyncNlSocket;
+pub use asynchronous::AsyncNlSocket;
+pub use synchronous::NlSocket;
