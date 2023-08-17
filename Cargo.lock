@@ -332,7 +332,7 @@ dependencies = [
 
 [[package]]
 name = "netlink_wi"
-version = "0.7.0-rc1"
+version = "0.7.0-rc2"
 dependencies = [
  "bitflags 2.4.0",
  "log",

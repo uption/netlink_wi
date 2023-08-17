@@ -3,7 +3,10 @@ use neli::attr::Attribute as NeliAttribute;
 use neli::err::DeError;
 
 use super::attributes::Attribute;
-use crate::attributes::{Attrs, Band, BandAttr, FrequencyAttr};
+use crate::{
+    attributes::{Attrs, Band, BandAttr, FrequencyAttr},
+    interface::MacAddress,
+};
 
 #[derive(Debug, Clone, Default)]
 /// Physical wireless device information returned from netlink.
@@ -21,6 +24,48 @@ pub struct PhysicalDevice {
     pub band_5ghz: Option<WifiBand>,
     /// 6 GHz band.
     pub band_6ghz: Option<WifiBand>,
+    /// Indicates if device is self-managing its regulatory information.
+    pub self_managed_reg: bool,
+    /// Device MAC address (BSSID).
+    pub mac: Option<MacAddress>,
+}
+
+impl PhysicalDevice {
+    pub(crate) fn merge(&mut self, other: &Self) {
+        if other.self_managed_reg {
+            self.self_managed_reg = true;
+        }
+        if other.mac.is_some() {
+            self.mac = other.mac;
+        }
+        if let Some(other_band_2ghz) = &other.band_2ghz {
+            if let Some(self_band_2ghz) = &mut self.band_2ghz {
+                self_band_2ghz
+                    .frequencies
+                    .extend(other_band_2ghz.frequencies.clone());
+            } else {
+                self.band_2ghz = other.band_2ghz.clone();
+            }
+        }
+        if let Some(other_band_5ghz) = &other.band_5ghz {
+            if let Some(self_band_5ghz) = &mut self.band_5ghz {
+                self_band_5ghz
+                    .frequencies
+                    .extend(other_band_5ghz.frequencies.clone());
+            } else {
+                self.band_5ghz = other.band_5ghz.clone();
+            }
+        }
+        if let Some(other_band_6ghz) = &other.band_6ghz {
+            if let Some(self_band_6ghz) = &mut self.band_6ghz {
+                self_band_6ghz
+                    .frequencies
+                    .extend(other_band_6ghz.frequencies.clone());
+            } else {
+                self.band_6ghz = other.band_6ghz.clone();
+            }
+        }
+    }
 }
 
 impl TryFrom<Attrs<'_, Attribute>> for PhysicalDevice {
@@ -38,6 +83,10 @@ impl TryFrom<Attrs<'_, Attribute>> for PhysicalDevice {
                 Attribute::WiphyBands => {
                     wiphy_bands_attr = Some(attr.get_attr_handle()?);
                 }
+                Attribute::Mac => {
+                    device.mac = Some(attr.get_payload_as()?);
+                }
+                Attribute::WiphySelfManagedReg => device.self_managed_reg = true,
                 Attribute::WiphyRetryShort
                 | Attribute::WiphyRetryLong
                 | Attribute::WiphyFragThreshold
@@ -48,6 +97,10 @@ impl TryFrom<Attrs<'_, Attribute>> for PhysicalDevice {
                 | Attribute::MaxScanIeLen
                 | Attribute::MaxSchedScanIeLen
                 | Attribute::MaxMatchSets
+                | Attribute::MaxScanPlanInterval
+                | Attribute::MaxScanPlanIterations
+                | Attribute::MaxNumSchedScanPlans
+                | Attribute::SchedScanMaxReqs
                 | Attribute::SupportIbssRsn
                 | Attribute::SupportApUapsd
                 | Attribute::TdlsSupport
@@ -67,7 +120,24 @@ impl TryFrom<Attrs<'_, Attribute>> for PhysicalDevice {
                 | Attribute::SoftwareIftypes
                 | Attribute::InterfaceCombinations
                 | Attribute::FeatureFlags
-                | Attribute::HtCapabilityMask => (), // TODO: Implement all wiphy attributes.
+                | Attribute::HtCapabilityMask
+                | Attribute::EmlCapability
+                | Attribute::PeerMeasurements
+                | Attribute::RxFrameTypes
+                | Attribute::TxFrameTypes
+                | Attribute::TxqQuantum
+                | Attribute::TxqMemoryLimit
+                | Attribute::TxqLimit
+                | Attribute::TxqStats
+                | Attribute::NanDual
+                | Attribute::IftypeExtCapa
+                | Attribute::ExtFeatures
+                | Attribute::ExtCapa
+                | Attribute::ExtCapaMask
+                | Attribute::MaxCsaCounters
+                | Attribute::VhtCapabilityMask
+                | Attribute::SarSpec
+                | Attribute::MacAddrs => (), // TODO: Implement all wiphy attributes.
                 unhandled => debug!("Unhandled station attribute 'Attribute::{unhandled:?}'"),
             }
         }
