@@ -79,10 +79,10 @@ pub struct WirelessStation {
     pub tx_bitrate: Option<RateInfo>,
 }
 
-impl TryFrom<Attrs<'_, Attribute>> for WirelessStation {
+impl TryFrom<&Attrs<'_, Attribute>> for WirelessStation {
     type Error = DeError;
 
-    fn try_from(handle: Attrs<'_, Attribute>) -> Result<Self, Self::Error> {
+    fn try_from(handle: &Attrs<'_, Attribute>) -> Result<Self, Self::Error> {
         let mut station = WirelessStation::default();
         let mut station_info_attr: Option<Attrs<'_, StationInfo>> = None;
         let mut tid_stats_attr: Option<Attrs<'_, u16>> = None;
