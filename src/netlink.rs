@@ -1,3 +1,4 @@
+use std::collections::HashMap;
 use std::error::Error;
 use std::io::Cursor;
 
@@ -284,15 +285,29 @@ impl NlSocket {
     }
 
     pub fn list_physical_devices(&mut self) -> Result<Vec<PhysicalDevice>, Box<dyn Error>> {
+        let attrs = {
+            let mut attrs = GenlBuffer::new();
+            let attr_type = AttrTypeBuilder::default()
+                .nla_type(Attribute::SplitWiphyDump)
+                .build()?;
+            attrs.push(
+                NlattrBuilder::default()
+                    .nla_type(attr_type)
+                    .nla_payload(())
+                    .build()?,
+            );
+            attrs
+        };
         let nl_payload = NlPayload::Payload(
             GenlmsghdrBuilder::<Command, Attribute, NoUserHeader>::default()
                 .cmd(Command::GetWiphy)
                 .version(NL80211_VERSION)
+                .attrs(attrs)
                 .build()?,
         );
         let recv: NlRouterReceiverHandle<Nlmsg, Neli80211Header> =
             self.send(NlmF::REQUEST | NlmF::DUMP, nl_payload)?;
-        let mut responses = Vec::new();
+        let mut responses = HashMap::new();
         for response in recv {
             let response = response?;
             match response.nl_payload() {
@@ -302,12 +317,76 @@ impl NlSocket {
                 }
                 NlPayload::Payload(payload) => {
                     let handle = payload.attrs().get_attr_handle();
-                    responses.push(handle.try_into()?);
+                    let device: PhysicalDevice = handle.try_into()?;
+                    responses
+                        .entry(device.wiphy_index)
+                        .and_modify(|d: &mut PhysicalDevice| d.merge(&device))
+                        .or_insert(device);
                 }
                 NlPayload::Empty | NlPayload::Ack(_) => (),
             };
         }
-        Ok(responses)
+        Ok(responses.values().cloned().collect())
+    }
+
+    pub fn get_physical_device(
+        &mut self,
+        wiphy_index: u32,
+    ) -> Result<Option<PhysicalDevice>, Box<dyn Error>> {
+        let attrs = {
+            let mut attrs = GenlBuffer::new();
+            let attr_type = AttrTypeBuilder::default()
+                .nla_type(Attribute::Wiphy)
+                .build()?;
+            attrs.push(
+                NlattrBuilder::default()
+                    .nla_type(attr_type)
+                    .nla_payload(wiphy_index)
+                    .build()?,
+            );
+            let attr_type = AttrTypeBuilder::default()
+                .nla_type(Attribute::SplitWiphyDump)
+                .build()?;
+            attrs.push(
+                NlattrBuilder::default()
+                    .nla_type(attr_type)
+                    .nla_payload(())
+                    .build()?,
+            );
+            attrs
+        };
+        let nl_payload = NlPayload::Payload(
+            GenlmsghdrBuilder::<Command, Attribute, NoUserHeader>::default()
+                .cmd(Command::GetWiphy)
+                .version(NL80211_VERSION)
+                .attrs(attrs)
+                .build()?,
+        );
+        let recv: NlRouterReceiverHandle<Nlmsg, Neli80211Header> =
+            self.send(NlmF::REQUEST | NlmF::DUMP, nl_payload)?;
+        let mut result: Option<PhysicalDevice> = None;
+        for response in recv {
+            let response = response?;
+            match response.nl_payload() {
+                NlPayload::Err(e) => {
+                    error!("Error when reading GetWiphy response: {e}");
+                    break;
+                }
+                NlPayload::Payload(payload) => {
+                    let handle = payload.attrs().get_attr_handle();
+                    let device: PhysicalDevice = handle.try_into()?;
+                    if device.wiphy_index == wiphy_index {
+                        if let Some(d) = result.as_mut() {
+                            d.merge(&device);
+                        } else {
+                            result = Some(device);
+                        }
+                    }
+                }
+                NlPayload::Empty | NlPayload::Ack(_) => (),
+            };
+        }
+        Ok(result)
     }
 
     pub fn get_regulatory_domain(&mut self) -> Result<Vec<RegulatoryDomain>, Box<dyn Error>> {
