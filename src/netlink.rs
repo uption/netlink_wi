@@ -1,3 +1,6 @@
+use std::error::Error;
+use std::io::Cursor;
+
 use log::{debug, error};
 use neli::consts::nl::{NlmF, Nlmsg};
 use neli::consts::socket::NlFamily;
@@ -8,8 +11,6 @@ use neli::router::synchronous::{NlRouter, NlRouterReceiverHandle};
 use neli::types::GenlBuffer;
 use neli::utils::Groups;
 use neli::{Size, ToBytes};
-use std::error::Error;
-use std::io::Cursor;
 
 use crate::attributes::MonitorFlags;
 use crate::interface::{ChannelWidth, InterfaceType};
@@ -52,7 +53,7 @@ impl NlSocket {
 
         let mut responses = Vec::new();
         for response in recv {
-            let response = response.unwrap();
+            let response = response?;
             match response.nl_payload() {
                 NlPayload::Err(e) => {
                     error!("Error when reading GetInterface response: {e}");
@@ -322,7 +323,7 @@ impl NlSocket {
 
         let mut responses = Vec::new();
         for response in recv {
-            let response = response.unwrap();
+            let response = response?;
             match response.nl_payload() {
                 NlPayload::Err(e) => {
                     error!("Error when reading GetReg response: {e}");
