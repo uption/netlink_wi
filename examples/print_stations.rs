@@ -15,7 +15,7 @@ fn main() {
         let interface = interface;
         let stations = socket.list_stations(interface.interface_index).unwrap();
         for station in stations {
-            println!("{:#?}", station);
+            println!("{station:#?}");
         }
     }
 }
