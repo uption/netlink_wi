@@ -54,7 +54,6 @@ impl TryFrom<&Attrs<'_, Attribute>> for RegulatoryDomain {
                 }
             }
         }
-        dbg!(reg_rule_attr);
         Ok(reg_domain)
     }
 }
