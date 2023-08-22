@@ -1,6 +1,6 @@
 [package]
 name = "netlink_wi"
-version = "0.7.0-rc2"
+version = "0.7.0-rc3"
 authors = [
     "Olli Paakkunainen <olli@paakkunainen.fi>",
     "Adarsh Krishnan <adarshk7@gmail.com>",
@@ -22,11 +22,12 @@ name = "netlink_wi"
 path = "src/lib.rs"
 
 [dependencies]
-bitflags = "2.3.3"
+bitflags = "2.3"
 log = "0.4"
 neli = { version = "0.7.0-rc2", features = ["sync", "async"] }
 neli-proc-macros = "0.2.0-rc2"
+nix = "0.26"
 
 [dev-dependencies]
-simple_logger = "4.2.0"
-tokio = { version = "1.31.0", features = ["macros", "rt-multi-thread"] }
+simple_logger = "4.2"
+tokio = { version = "1", features = ["macros", "rt-multi-thread"] }

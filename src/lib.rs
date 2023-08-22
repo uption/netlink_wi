@@ -21,6 +21,7 @@ pub(crate) mod attributes;
 pub(crate) mod commands;
 
 mod asynchronous;
+mod error;
 pub mod interface;
 mod netlink;
 pub mod reg_domain;
@@ -30,4 +31,5 @@ pub mod wiphy;
 
 pub use crate::attributes::MonitorFlags;
 pub use asynchronous::AsyncNlSocket;
+pub use error::NlError;
 pub use synchronous::NlSocket;
