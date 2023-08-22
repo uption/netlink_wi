@@ -13,6 +13,6 @@ async fn main() {
     let mut socket = AsyncNlSocket::connect().await.unwrap();
     let interfaces = socket.list_interfaces().await.unwrap();
     for interface in interfaces {
-        println!("{:#?}", interface);
+        println!("{interface:#?}");
     }
 }
