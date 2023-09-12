@@ -20,16 +20,20 @@
 pub(crate) mod attributes;
 pub(crate) mod commands;
 
+#[cfg(feature = "async")]
 mod asynchronous;
 mod error;
 pub mod interface;
 mod netlink;
 pub mod reg_domain;
 pub mod station;
+#[cfg(feature = "sync")]
 mod synchronous;
 pub mod wiphy;
 
 pub use crate::attributes::MonitorFlags;
+#[cfg(feature = "async")]
 pub use asynchronous::AsyncNlSocket;
 pub use error::NlError;
+#[cfg(feature = "sync")]
 pub use synchronous::NlSocket;

@@ -31,3 +31,8 @@ nix = "0.26"
 [dev-dependencies]
 simple_logger = "4.2"
 tokio = { version = "1", features = ["macros", "rt-multi-thread"] }
+
+[features]
+default = ["sync"]
+sync = ["neli/sync"]
+async = ["neli/async"]
