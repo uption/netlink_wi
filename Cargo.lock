@@ -312,8 +312,7 @@ dependencies = [
 [[package]]
 name = "neli"
 version = "0.7.0-rc2"
-source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "4de016d5ec13f40df05f92660c9322325d7e15e3ea6f9b365a6e0ecc7cb0b7f2"
+source = "git+https://github.com/jbaublitz/neli.git?branch=race-condition#cce58555e2b3ecca9a3c81d4fb4b15460c936b51"
 dependencies = [
  "bitflags 2.4.0",
  "byteorder",
@@ -321,7 +320,7 @@ dependencies = [
  "getset",
  "libc",
  "log",
- "neli-proc-macros",
+ "neli-proc-macros 0.2.0-rc2 (git+https://github.com/jbaublitz/neli.git?branch=race-condition)",
  "parking_lot",
  "tokio",
 ]
@@ -340,13 +339,25 @@ dependencies = [
 ]
 
 [[package]]
+name = "neli-proc-macros"
+version = "0.2.0-rc2"
+source = "git+https://github.com/jbaublitz/neli.git?branch=race-condition#cce58555e2b3ecca9a3c81d4fb4b15460c936b51"
+dependencies = [
+ "either",
+ "proc-macro2",
+ "quote",
+ "serde",
+ "syn 1.0.109",
+]
+
+[[package]]
 name = "netlink_wi"
 version = "0.7.0-rc4"
 dependencies = [
  "bitflags 2.4.0",
  "log",
  "neli",
- "neli-proc-macros",
+ "neli-proc-macros 0.2.0-rc2 (registry+https://github.com/rust-lang/crates.io-index)",
  "nix",
  "simple_logger",
  "tokio",
