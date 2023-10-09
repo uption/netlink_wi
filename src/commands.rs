@@ -58,10 +58,15 @@ pub(crate) enum Command {
     /// reserved; not used
     SetMgmtExtraIe = 30,
 
-    ///  Ask the wireless core to send us its currently set regulatory domain.
+    /// Ask the wireless core to send us its currently set regulatory domain.
     GetReg = 31,
 
     GetScan = 32,
+    /// Trigger a new scan with the given parameters.
+    /// NL80211_ATTR_TX_NO_CCK_RATE is used to decide whether to send the
+    /// probe requests at CCK rate or not. %NL80211_ATTR_BSSID can be used to
+    /// specify a BSSID to scan for; if not included, the wildcard BSSID will
+    /// be used.
     TriggerScan = 33,
     NewScanResults = 34,
     ScanAborted = 35,

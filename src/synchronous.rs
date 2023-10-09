@@ -123,6 +123,12 @@ impl NlSocket {
         Ok(responses)
     }
 
+    pub fn trigger_scan(&mut self, if_index: u32) -> Result<()> {
+        let request = Nl80211Request::trigger_scan(if_index);
+        let recv = self.send(request)?;
+        Self::handle_ack_response(recv)
+    }
+
     fn send(
         &self,
         request: Nl80211Request,
