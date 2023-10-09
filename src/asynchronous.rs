@@ -144,6 +144,12 @@ impl AsyncNlSocket {
         Self::handle_ack_response(recv).await
     }
 
+    pub async fn abort_scan(&mut self, if_index: u32) -> Result<()> {
+        let request = Nl80211Request::abort_scan(if_index);
+        let recv = self.send(request).await?;
+        Self::handle_ack_response(recv).await
+    }
+
     async fn send(
         &self,
         request: Nl80211Request,

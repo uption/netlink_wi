@@ -123,8 +123,18 @@ impl NlSocket {
         Ok(responses)
     }
 
+    /// Trigger a new scan.
     pub fn trigger_scan(&mut self, if_index: u32) -> Result<()> {
         let request = Nl80211Request::trigger_scan(if_index);
+        let recv = self.send(request)?;
+        Self::handle_ack_response(recv)
+    }
+
+    /// Stop an ongoing scan.
+    ///
+    /// Returns NlError ENOENT if a scan is not running.
+    pub fn abort_scan(&mut self, if_index: u32) -> Result<()> {
+        let request = Nl80211Request::abort_scan(if_index);
         let recv = self.send(request)?;
         Self::handle_ack_response(recv)
     }

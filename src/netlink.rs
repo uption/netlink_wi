@@ -313,4 +313,33 @@ impl Nl80211Request {
             ),
         }
     }
+
+    pub fn abort_scan(if_index: u32) -> Self {
+        let attrs = {
+            let mut attrs = GenlBuffer::new();
+            let attr_type = AttrTypeBuilder::default()
+                .nla_type(Attribute::Ifindex)
+                .build()
+                .unwrap();
+            attrs.push(
+                NlattrBuilder::default()
+                    .nla_type(attr_type)
+                    .nla_payload(if_index)
+                    .build()
+                    .unwrap(),
+            );
+            attrs
+        };
+        Self {
+            nl_flags: NlmF::REQUEST | NlmF::ACK,
+            nl_payload: NlPayload::Payload(
+                GenlmsghdrBuilder::<Command, Attribute, NoUserHeader>::default()
+                    .cmd(Command::AbortScan)
+                    .version(NL80211_VERSION)
+                    .attrs(attrs)
+                    .build()
+                    .unwrap(),
+            ),
+        }
+    }
 }
