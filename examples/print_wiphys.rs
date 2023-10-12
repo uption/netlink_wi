@@ -10,7 +10,7 @@ fn main() {
         .init()
         .unwrap();
 
-    let mut socket = NlSocket::connect().unwrap();
+    let socket = NlSocket::connect().unwrap();
     let devices = socket.list_physical_devices().unwrap();
     for device in devices {
         println!("{device:#?}");

@@ -34,7 +34,7 @@ impl NlSocket {
         Ok(Self { socket, nl_type })
     }
 
-    pub fn list_interfaces(&mut self) -> Result<Vec<WirelessInterface>> {
+    pub fn list_interfaces(&self) -> Result<Vec<WirelessInterface>> {
         let request = Nl80211Request::list_interfaces();
         let recv = self.send(request)?;
 
@@ -46,25 +46,40 @@ impl NlSocket {
         Ok(responses)
     }
 
-    pub fn set_interface(&mut self, if_index: u32, if_type: InterfaceType) -> Result<()> {
+    pub fn get_interface(&self, if_index: u32) -> Result<Option<WirelessInterface>> {
+        let request = Nl80211Request::get_interface(if_index);
+        let recv = self.send(request)?;
+
+        let mut result: Option<WirelessInterface> = None;
+        Self::handle_dump_response(recv, |handle| {
+            let device: WirelessInterface = handle.try_into()?;
+            if device.interface_index == if_index {
+                result = Some(device);
+            }
+            Ok(())
+        })?;
+        Ok(result)
+    }
+
+    pub fn set_interface(&self, if_index: u32, if_type: InterfaceType) -> Result<()> {
         let request = Nl80211Request::set_interface(if_index, if_type);
         let recv = self.send(request)?;
         Self::handle_ack_response(recv)
     }
 
-    pub fn set_monitor_flags(&mut self, if_index: u32, flags: Vec<MonitorFlags>) -> Result<()> {
+    pub fn set_monitor_flags(&self, if_index: u32, flags: Vec<MonitorFlags>) -> Result<()> {
         let request = Nl80211Request::set_monitor_flags(if_index, flags);
         let recv = self.send(request)?;
         Self::handle_ack_response(recv)
     }
 
-    pub fn set_channel(&mut self, if_index: u32, freq: u32, width: ChannelWidth) -> Result<()> {
+    pub fn set_channel(&self, if_index: u32, freq: u32, width: ChannelWidth) -> Result<()> {
         let request = Nl80211Request::set_channel(if_index, freq, width);
         let recv = self.send(request)?;
         Self::handle_ack_response(recv)
     }
 
-    pub fn list_stations(&mut self, if_index: u32) -> Result<Vec<WirelessStation>> {
+    pub fn list_stations(&self, if_index: u32) -> Result<Vec<WirelessStation>> {
         let request = Nl80211Request::list_stations(if_index);
         let recv = self.send(request)?;
 
@@ -76,7 +91,7 @@ impl NlSocket {
         Ok(responses)
     }
 
-    pub fn list_physical_devices(&mut self) -> Result<Vec<PhysicalDevice>> {
+    pub fn list_physical_devices(&self) -> Result<Vec<PhysicalDevice>> {
         let request = Nl80211Request::list_physical_devices();
         let recv = self.send(request)?;
 
@@ -92,7 +107,7 @@ impl NlSocket {
         Ok(responses.values().cloned().collect())
     }
 
-    pub fn get_physical_device(&mut self, wiphy_index: u32) -> Result<Option<PhysicalDevice>> {
+    pub fn get_physical_device(&self, wiphy_index: u32) -> Result<Option<PhysicalDevice>> {
         let request = Nl80211Request::get_physical_device(wiphy_index);
         let recv = self.send(request)?;
 
@@ -111,7 +126,7 @@ impl NlSocket {
         Ok(result)
     }
 
-    pub fn get_regulatory_domain(&mut self) -> Result<Vec<RegulatoryDomain>> {
+    pub fn get_regulatory_domain(&self) -> Result<Vec<RegulatoryDomain>> {
         let request = Nl80211Request::get_regulatory_domain();
         let recv = self.send(request)?;
 
@@ -124,7 +139,7 @@ impl NlSocket {
     }
 
     /// Trigger a new scan.
-    pub fn trigger_scan(&mut self, if_index: u32) -> Result<()> {
+    pub fn trigger_scan(&self, if_index: u32) -> Result<()> {
         let request = Nl80211Request::trigger_scan(if_index);
         let recv = self.send(request)?;
         Self::handle_ack_response(recv)
@@ -133,7 +148,7 @@ impl NlSocket {
     /// Stop an ongoing scan.
     ///
     /// Returns NlError ENOENT if a scan is not running.
-    pub fn abort_scan(&mut self, if_index: u32) -> Result<()> {
+    pub fn abort_scan(&self, if_index: u32) -> Result<()> {
         let request = Nl80211Request::abort_scan(if_index);
         let recv = self.send(request)?;
         Self::handle_ack_response(recv)

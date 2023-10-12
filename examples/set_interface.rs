@@ -9,7 +9,7 @@ fn main() {
         .init()
         .unwrap();
 
-    let mut socket = NlSocket::connect().unwrap();
+    let socket = NlSocket::connect().unwrap();
     let interfaces: Vec<_> = socket
         .list_interfaces()
         .unwrap()

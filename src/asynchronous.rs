@@ -45,6 +45,22 @@ impl AsyncNlSocket {
         Ok(responses)
     }
 
+    pub async fn get_interface(&self, if_index: u32) -> Result<Option<WirelessInterface>> {
+        let request = Nl80211Request::get_interface(if_index);
+        let recv = self.send(request).await?;
+
+        let mut result: Option<WirelessInterface> = None;
+        Self::handle_dump_response(recv, |handle| {
+            let device: WirelessInterface = handle.try_into()?;
+            if device.interface_index == if_index {
+                result = Some(device);
+            }
+            Ok(())
+        })
+        .await?;
+        Ok(result)
+    }
+
     pub async fn set_interface(&self, if_index: u32, if_type: InterfaceType) -> Result<()> {
         let request = Nl80211Request::set_interface(if_index, if_type);
         let recv = self.send(request).await?;
