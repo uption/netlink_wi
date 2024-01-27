@@ -1,3 +1,7 @@
+use std::collections::HashMap;
+use std::fmt::Write;
+use std::io::Cursor;
+
 use log::debug;
 use neli::consts::nl::Nlmsg;
 use neli::consts::socket::NlFamily;
@@ -6,8 +10,6 @@ use neli::nl::NlPayload;
 use neli::router::asynchronous::{NlRouter, NlRouterReceiverHandle};
 use neli::utils::Groups;
 use neli::ToBytes;
-use std::collections::HashMap;
-use std::io::Cursor;
 
 use crate::attributes::{Attribute, Attrs, MonitorFlags};
 use crate::error::Result;
@@ -164,7 +166,10 @@ impl AsyncNlSocket {
         if cfg!(debug_assertions) {
             let mut b: Cursor<Vec<u8>> = Cursor::new(Vec::new());
             request.nl_payload.to_bytes(&mut b).unwrap();
-            let octets: String = b.get_ref().iter().map(|v| format!("{:02x} ", v)).collect();
+            let octets: String = b.get_ref().iter().fold(String::new(), |mut output, b| {
+                let _ = write!(output, "{b:02x} ");
+                output
+            });
             debug!("[PAYLOAD] {octets}");
         }
         self.socket
