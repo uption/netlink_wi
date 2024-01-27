@@ -11,10 +11,8 @@ fn main() {
         .unwrap();
 
     let socket = NlSocket::connect().unwrap();
-    loop {
-        let domains = socket.get_regulatory_domain().unwrap();
-        for domain in domains {
-            println!("{domain:#?}");
-        }
+    let domains = socket.get_regulatory_domain().unwrap();
+    for domain in domains {
+        println!("{domain:#?}");
     }
 }
