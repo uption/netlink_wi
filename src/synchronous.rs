@@ -1,4 +1,5 @@
 use std::collections::HashMap;
+use std::fmt::Write;
 use std::io::Cursor;
 
 use log::debug;
@@ -164,7 +165,10 @@ impl NlSocket {
         if cfg!(debug_assertions) {
             let mut b: Cursor<Vec<u8>> = Cursor::new(Vec::new());
             request.nl_payload.to_bytes(&mut b).unwrap();
-            let octets: String = b.get_ref().iter().map(|v| format!("{:02x} ", v)).collect();
+            let octets: String = b.get_ref().iter().fold(String::new(), |mut output, b| {
+                let _ = write!(output, "{b:02x} ");
+                output
+            });
             debug!("[PAYLOAD] {octets}");
         }
         self.socket
