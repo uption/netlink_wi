@@ -39,7 +39,7 @@ where
 {
     fn from(value: RouterError<T, P>) -> Self {
         match &value {
-            RouterError::Nlmsgerr(err) => NlError::new(Errno::from_i32(-*err.error())),
+            RouterError::Nlmsgerr(err) => NlError::new(Errno::from_raw(-*err.error())),
             _ => NlError::new(value),
         }
     }
@@ -55,6 +55,6 @@ type Nl80211Msgerr = Nlmsgerr<NlmsghdrErr<Nlmsg, Genlmsghdr<Command, Attribute>>
 
 impl From<Nl80211Msgerr> for NlError {
     fn from(value: Nl80211Msgerr) -> Self {
-        NlError::new(Errno::from_i32(-value.error()))
+        NlError::new(Errno::from_raw(-value.error()))
     }
 }
