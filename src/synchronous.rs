@@ -13,8 +13,8 @@ use neli::ToBytes;
 
 use crate::attributes::{Attribute, Attrs, MonitorFlags};
 use crate::error::Result;
-use crate::interface::{ChannelWidth, InterfaceType};
-use crate::netlink::{Neli80211Header, Nl80211Request};
+use crate::interface::InterfaceType;
+use crate::netlink::{ChannelConfig, Neli80211Header, Nl80211Request};
 use crate::reg_domain::RegulatoryDomain;
 use crate::station::WirelessStation;
 use crate::wiphy::PhysicalDevice;
@@ -74,8 +74,8 @@ impl NlSocket {
         Self::handle_ack_response(recv)
     }
 
-    pub fn set_channel(&self, if_index: u32, freq: u32, width: ChannelWidth) -> Result<()> {
-        let request = Nl80211Request::set_channel(if_index, freq, width);
+    pub fn set_channel(&self, config: ChannelConfig) -> Result<()> {
+        let request = Nl80211Request::set_channel(config);
         let recv = self.send(request)?;
         Self::handle_ack_response(recv)
     }

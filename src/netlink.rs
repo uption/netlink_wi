@@ -152,7 +152,8 @@ impl Nl80211Request {
         }
     }
 
-    pub fn set_channel(if_index: u32, freq: u32, width: ChannelWidth) -> Self {
+    /// Set the channel for the given interface.
+    pub fn set_channel(config: ChannelConfig) -> Self {
         let attrs = {
             let mut attrs = GenlBuffer::new();
             let attr_type = AttrTypeBuilder::default()
@@ -162,7 +163,7 @@ impl Nl80211Request {
             attrs.push(
                 NlattrBuilder::default()
                     .nla_type(attr_type)
-                    .nla_payload(if_index)
+                    .nla_payload(config.if_index)
                     .build()
                     .unwrap(),
             );
@@ -173,7 +174,7 @@ impl Nl80211Request {
             attrs.push(
                 NlattrBuilder::default()
                     .nla_type(attr_type)
-                    .nla_payload(freq)
+                    .nla_payload(config.freq)
                     .build()
                     .unwrap(),
             );
@@ -184,10 +185,38 @@ impl Nl80211Request {
             attrs.push(
                 NlattrBuilder::default()
                     .nla_type(attr_type)
-                    .nla_payload(Into::<NlChannelWidth>::into(width))
+                    .nla_payload(Into::<NlChannelWidth>::into(config.width))
                     .build()
                     .unwrap(),
             );
+
+            if let Some(center_freq1) = config.center_freq1 {
+                let attr_type = AttrTypeBuilder::default()
+                    .nla_type(Attribute::CenterFreq1)
+                    .build()
+                    .unwrap();
+                attrs.push(
+                    NlattrBuilder::default()
+                        .nla_type(attr_type)
+                        .nla_payload(center_freq1)
+                        .build()
+                        .unwrap(),
+                );
+            }
+            if let Some(center_freq2) = config.center_freq2 {
+                let attr_type = AttrTypeBuilder::default()
+                    .nla_type(Attribute::CenterFreq2)
+                    .build()
+                    .unwrap();
+                attrs.push(
+                    NlattrBuilder::default()
+                        .nla_type(attr_type)
+                        .nla_payload(center_freq2)
+                        .build()
+                        .unwrap(),
+                );
+            }
+
             attrs
         };
         Self {
@@ -370,5 +399,48 @@ impl Nl80211Request {
                     .unwrap(),
             ),
         }
+    }
+}
+
+/// Configuration for setting a channel.
+///
+/// Center frequency 1 is required for the following channel widths:
+/// - 40 MHz
+/// - 80 MHz
+/// - 80+80 MHz
+/// - 160 MHz
+/// - 320 MHz
+///
+/// Center frequency 2 is required for the following channel widths:
+/// - 80+80 MHz
+///
+#[derive(Debug, Clone)]
+pub struct ChannelConfig {
+    if_index: u32,
+    freq: u32,
+    center_freq1: Option<u32>,
+    center_freq2: Option<u32>,
+    width: ChannelWidth,
+}
+
+impl ChannelConfig {
+    pub fn new(if_index: u32, freq: u32, width: ChannelWidth) -> Self {
+        Self {
+            if_index,
+            freq,
+            center_freq1: None,
+            center_freq2: None,
+            width,
+        }
+    }
+
+    pub fn with_center_freq1(mut self, center_freq1: u32) -> Self {
+        self.center_freq1 = Some(center_freq1);
+        self
+    }
+
+    pub fn with_center_freq2(mut self, center_freq2: u32) -> Self {
+        self.center_freq2 = Some(center_freq2);
+        self
     }
 }
