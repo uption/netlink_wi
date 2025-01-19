@@ -1,4 +1,4 @@
 [workspace]
 resolver = "2"
 
-members = ["netlink_wi"]
+members = ["netlink_wi", "iwtui"]

@@ -22,11 +22,11 @@ pub struct WirelessStation {
     /// whenever the object list being dumped changes.
     pub generation: u32,
     /// Signal strength of last received PPDU in dBm.
-    pub signal: Option<u8>,
+    pub signal: Option<i8>,
     /// Signal strength average in dBm.
-    pub average_signal: Option<u8>,
+    pub average_signal: Option<i8>,
     /// Signal strength average for beacons only in dBm.
-    pub beacon_average_signal: Option<u8>,
+    pub beacon_average_signal: Option<i8>,
     /// Per-chain signal strength of last PPDU in dBm.
     pub chain_signal: Vec<u8>,
     /// Time since the station was last connected.

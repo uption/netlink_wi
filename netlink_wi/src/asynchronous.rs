@@ -213,3 +213,9 @@ impl AsyncNlSocket {
         Ok(())
     }
 }
+
+impl std::fmt::Debug for AsyncNlSocket {
+    fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
+        f.debug_struct("AsyncNlSocket").finish()
+    }
+}

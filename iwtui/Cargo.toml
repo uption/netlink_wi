@@ -1,0 +1,22 @@
+[package]
+name = "iwtui"
+version = "0.1.0"
+authors = ["Olli Paakkunainen <olli@paakkunainen.fi>"]
+edition = "2021"
+description = """A TUI for interacting with wireless hardware in Linux operating system."""
+categories = ["command-line-utilities"]
+keywords = ["netlink", "linux", "wifi", "nl80211", "wireless", "tui"]
+license = "MIT"
+readme = "README.md"
+repository = "https://github.com/uption/netlink_wi/tree/main/iwtui"
+include = ["**/*.rs", "Cargo.toml", "LICENSE"]
+
+
+[dependencies]
+netlink_wi = { path = "../netlink_wi" }
+ratatui = "0.29.0"
+crossterm = "0.28.1"
+color-eyre = "0.6.3"
+
+[dev-dependencies]
+insta = "1.42.0"

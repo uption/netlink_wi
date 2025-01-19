@@ -1,0 +1,24 @@
+---
+source: iwtui/src/main.rs
+expression: terminal.backend()
+---
+"┏━━━━━━━━━━━━━━━━━━━━━━━━━━━━ Counter App Tutorial ━━━━━━━━━━━━━━━━━━━━━━━━━━━━┓"
+"┃                                   Value: 0                                   ┃"
+"┃                                                                              ┃"
+"┃                                                                              ┃"
+"┃                                                                              ┃"
+"┃                                                                              ┃"
+"┃                                                                              ┃"
+"┃                                                                              ┃"
+"┃                                                                              ┃"
+"┃                                                                              ┃"
+"┃                                                                              ┃"
+"┃                                                                              ┃"
+"┃                                                                              ┃"
+"┃                                                                              ┃"
+"┃                                                                              ┃"
+"┃                                                                              ┃"
+"┃                                                                              ┃"
+"┃                                                                              ┃"
+"┃                                                                              ┃"
+"┗━━━━━━━━━━━━━━━━ Decrement <Left> Increment <Right> Quit <Q> ━━━━━━━━━━━━━━━━━┛"

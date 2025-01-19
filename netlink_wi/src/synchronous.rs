@@ -210,3 +210,9 @@ impl NlSocket {
         Ok(())
     }
 }
+
+impl std::fmt::Debug for NlSocket {
+    fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
+        write!(f, "NlSocket")
+    }
+}
