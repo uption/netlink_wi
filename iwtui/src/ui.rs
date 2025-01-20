@@ -1,5 +1,5 @@
 use ratatui::prelude::*;
-use ratatui::widgets::{Block, HighlightSpacing, List, ListItem, Paragraph};
+use ratatui::widgets::{Block, HighlightSpacing, List, ListItem, Padding, Paragraph};
 
 use crate::app::App;
 
@@ -10,13 +10,25 @@ impl Widget for &mut App {
             .constraints([Constraint::Min(3), Constraint::Length(30)])
             .split(area);
 
-        let block = Block::bordered();
+        InterfaceMenu::draw(self, chunks[1], buf);
+        MainView::draw(self, chunks[0], buf);
+    }
+}
 
-        let items = self.wifi_info.interfaces().into_iter().map(|interface| {
+struct InterfaceMenu;
+
+impl InterfaceMenu {
+    fn draw(app: &mut App, area: Rect, buf: &mut Buffer) {
+        let title = Line::from(" interfaces ".bold());
+        let block = Block::bordered()
+            .title(title.centered())
+            .padding(Padding::left(1));
+
+        let items = app.wifi_info.interfaces().into_iter().map(|interface| {
             if interface.name.is_empty() {
                 return ListItem::new("<empty>".to_string());
             }
-            ListItem::new(interface.name.clone())
+            ListItem::new(interface.name)
         });
 
         let list = List::new(items)
@@ -24,8 +36,14 @@ impl Widget for &mut App {
             .highlight_symbol("> ")
             .highlight_style(Style::new().add_modifier(Modifier::BOLD))
             .highlight_spacing(HighlightSpacing::Always);
-        StatefulWidget::render(list, chunks[1], buf, &mut self.list_state);
+        StatefulWidget::render(list, area, buf, &mut app.list_state);
+    }
+}
 
+struct MainView;
+
+impl MainView {
+    fn draw(app: &mut App, area: Rect, buf: &mut Buffer) {
         let title = Line::from(" iwtui ".bold());
         let instructions = Line::from(vec![
             " Decrement ".into(),
@@ -37,10 +55,11 @@ impl Widget for &mut App {
         ]);
         let block = Block::bordered()
             .title(title.centered())
+            .padding(Padding::left(1))
             .title_bottom(instructions.centered());
 
-        let selected = self.list_state.selected().unwrap_or(0);
-        let interfaces = self.wifi_info.interfaces();
+        let selected = app.list_state.selected().unwrap_or(0);
+        let interfaces = app.wifi_info.interfaces();
         let selected_interface = interfaces.get(selected);
         if let Some(interface) = selected_interface {
             let mut text = vec![
@@ -69,7 +88,7 @@ impl Widget for &mut App {
             if let Some(v) = interface.ssid.as_ref() {
                 text.push(format!("SSID: {v}"));
             }
-            let stations = self.wifi_info.stations();
+            let stations = app.wifi_info.stations();
             for station in stations
                 .iter()
                 .filter(|s| s.interface_index == interface.interface_index)
@@ -110,7 +129,7 @@ impl Widget for &mut App {
             Paragraph::new(interface_text)
                 .left_aligned()
                 .block(block)
-                .render(chunks[0], buf);
+                .render(area, buf);
         }
     }
 }
