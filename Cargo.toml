@@ -24,8 +24,8 @@ path = "src/lib.rs"
 [dependencies]
 bitflags = "2.8"
 log = "0.4"
-neli = { git = "https://github.com/jbaublitz/neli.git", branch = "race-condition" }
-neli-proc-macros = "0.2.0-rc2"
+neli = "0.7.0-rc3"
+neli-proc-macros = "0.2.0-rc3"
 nix = "0.29"
 
 [dev-dependencies]
