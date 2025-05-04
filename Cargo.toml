@@ -26,7 +26,7 @@ bitflags = "2.8"
 log = "0.4"
 neli = "0.7.0-rc3"
 neli-proc-macros = "0.2.0-rc3"
-nix = "0.29"
+nix = "0.30"
 
 [dev-dependencies]
 simple_logger = "5.0"
