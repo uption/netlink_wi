@@ -190,7 +190,7 @@ impl NlSocket {
                     let handle = payload.attrs().get_attr_handle();
                     f(&handle)?
                 }
-                NlPayload::Empty | NlPayload::Ack(_) => (),
+                NlPayload::Empty | NlPayload::Ack(_) | NlPayload::DumpExtAck(_) => (),
             };
         }
         Ok(())
@@ -204,7 +204,10 @@ impl NlSocket {
                     debug!("Error when reading ack response: {err}");
                     return Err(err.clone().into());
                 }
-                NlPayload::Payload(_) | NlPayload::Empty | NlPayload::Ack(_) => (),
+                NlPayload::Payload(_)
+                | NlPayload::Empty
+                | NlPayload::Ack(_)
+                | NlPayload::DumpExtAck(_) => (),
             };
         }
         Ok(())
