@@ -1,3 +1,8 @@
+//! Error types for netlink_wi operations.
+//!
+//! This module defines the error types used throughout the library for handling
+//! netlink errors.
+
 use std::{fmt::Display, result};
 
 use neli::{
@@ -11,13 +16,15 @@ use crate::{attributes::Attribute, commands::Command};
 
 pub type Result<T> = result::Result<T, NlError>;
 
+/// The main error type for netlink_wi operations.
 #[derive(Clone, Debug)]
 pub struct NlError {
+    /// The error message describing what went wrong.
     pub msg: String,
 }
 
 impl NlError {
-    pub fn new<T: Display>(msg: T) -> NlError {
+    pub(crate) fn new<T: Display>(msg: T) -> NlError {
         NlError {
             msg: msg.to_string(),
         }

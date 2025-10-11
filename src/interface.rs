@@ -1,3 +1,8 @@
+//! Wireless network interface types and information.
+//!
+//! This module defines types for working with wireless network interfaces, including
+//! interface configuration, operating modes, channel settings, and MAC addresses.
+
 use std::convert::TryFrom;
 use std::fmt;
 
@@ -237,6 +242,7 @@ pub struct MacAddress {
 }
 
 impl MacAddress {
+    /// Returns the MAC address as a byte array.
     pub fn as_bytes(&self) -> [u8; 6] {
         self.address_bytes
     }
@@ -344,20 +350,35 @@ impl fmt::Display for InterfaceType {
 #[derive(Debug, Copy, Clone, PartialEq, Eq, Default)]
 /// Wireless channel width.
 pub enum ChannelWidth {
+    /// 20 MHz channel without HT (High Throughput) features.
     Width20NoHT,
+    /// 20 MHz channel with HT features.
     Width20,
+    /// 40 MHz channel.
     Width40,
+    /// 80 MHz channel.
     Width80,
+    /// 80+80 MHz non-contiguous channel.
     Width80P80,
+    /// 160 MHz channel.
     Width160,
+    /// 5 MHz OFDM channel.
     Width5,
+    /// 10 MHz OFDM channel.
     Width10,
+    /// 1 MHz OFDM channel.
     Width1,
+    /// 2 MHz OFDM channel.
     Width2,
+    /// 4 MHz OFDM channel.
     Width4,
+    /// 8 MHz OFDM channel.
     Width8,
+    /// 16 MHz OFDM channel.
     Width16,
+    /// 320 MHz channel.
     Width320,
+    /// Unknown or unrecognized channel width.
     #[default]
     Unknown,
 }

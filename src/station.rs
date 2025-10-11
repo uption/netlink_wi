@@ -1,3 +1,9 @@
+//! Wireless station information and statistics.
+//!
+//! This module provides types for working with wireless stations (connected clients or
+//! access points), including connection statistics, signal strength, bitrate information,
+//! and traffic identifier (TID) statistics.
+
 use std::fmt;
 use std::time::Duration;
 
@@ -69,13 +75,13 @@ pub struct WirelessStation {
     pub bss_short_preamble: Option<bool>,
     /// Indicates if short slot time is enabled.
     pub bss_short_slot_time: Option<bool>,
-    // BSS DTIM period for beaconing.
+    /// BSS DTIM period for beaconing.
     pub bss_dtim_period: Option<u8>,
-    // BSS beacon interval.
+    /// BSS beacon interval.
     pub bss_beacon_interval: Option<u16>,
-    // Receive bitrate information.
+    /// Receive bitrate information.
     pub rx_bitrate: Option<RateInfo>,
-    // Transmit bitrate information.
+    /// Transmit bitrate information.
     pub tx_bitrate: Option<RateInfo>,
 }
 
@@ -269,7 +275,7 @@ pub struct TrafficIdStats {
 }
 
 impl TrafficIdStats {
-    pub fn new(tid_number: u16) -> Self {
+    pub(crate) fn new(tid_number: u16) -> Self {
         Self {
             tid_number,
             ..Default::default()
@@ -291,11 +297,11 @@ pub struct RateInfo {
     /// Channel width.
     pub channel_width: ChannelWidth,
     /// Number of spatial streams.
-    stream_count: u8,
+    pub stream_count: u8,
     /// HE DCM value (0/1).
-    dcm_value: Option<u8>,
+    pub dcm_value: Option<u8>,
     /// HE RU allocation, if not present then non-OFDMA is used.
-    ru_allocation: Option<HeRuAllocation>,
+    pub ru_allocation: Option<HeRuAllocation>,
 }
 
 impl TryFrom<Attrs<'_, NlRateInfo>> for RateInfo {

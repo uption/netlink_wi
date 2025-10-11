@@ -35,6 +35,7 @@ pub use crate::attributes::MonitorFlags;
 #[cfg(feature = "async")]
 pub use asynchronous::AsyncNlSocket;
 pub use error::NlError;
+pub use error::Result as NlResult;
 pub use netlink::ChannelConfig;
 #[cfg(feature = "sync")]
 pub use synchronous::NlSocket;

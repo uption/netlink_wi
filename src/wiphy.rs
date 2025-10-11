@@ -1,3 +1,9 @@
+//! Physical wireless device (wiphy) information.
+//!
+//! This module provides types for working with physical wireless devices (PHYs),
+//! including supported frequency bands, channels, and regulatory capabilities.
+//! Each physical device can have multiple virtual interfaces operating on it.
+
 use log::debug;
 use neli::attr::Attribute as NeliAttribute;
 use neli::err::DeError;

@@ -30,8 +30,8 @@ use super::interface::WirelessInterface;
 /// # Examples
 ///
 /// ```no_run
-/// # use netlink_wi::asynchronous::AsyncNlSocket;
-/// # async fn example() -> netlink_wi::error::Result<()> {
+/// # use netlink_wi::AsyncNlSocket;
+/// # async fn example() -> netlink_wi::NlResult<()> {
 /// let socket = AsyncNlSocket::connect().await?;
 /// let interfaces = socket.list_interfaces().await?;
 /// # Ok(())
@@ -54,8 +54,8 @@ impl AsyncNlSocket {
     /// # Examples
     ///
     /// ```no_run
-    /// # use netlink_wi::asynchronous::AsyncNlSocket;
-    /// # async fn example() -> netlink_wi::error::Result<()> {
+    /// # use netlink_wi::AsyncNlSocket;
+    /// # async fn example() -> netlink_wi::NlResult<()> {
     /// let socket = AsyncNlSocket::connect().await?;
     /// # Ok(())
     /// # }
@@ -71,8 +71,8 @@ impl AsyncNlSocket {
     /// # Examples
     ///
     /// ```no_run
-    /// # use netlink_wi::asynchronous::AsyncNlSocket;
-    /// # async fn example() -> netlink_wi::error::Result<()> {
+    /// # use netlink_wi::AsyncNlSocket;
+    /// # async fn example() -> netlink_wi::NlResult<()> {
     /// let socket = AsyncNlSocket::connect().await?;
     /// let interfaces = socket.list_interfaces().await?;
     /// for interface in interfaces {
@@ -102,8 +102,8 @@ impl AsyncNlSocket {
     /// # Examples
     ///
     /// ```no_run
-    /// # use netlink_wi::asynchronous::AsyncNlSocket;
-    /// # async fn example() -> netlink_wi::error::Result<()> {
+    /// # use netlink_wi::AsyncNlSocket;
+    /// # async fn example() -> netlink_wi::NlResult<()> {
     /// let socket = AsyncNlSocket::connect().await?;
     /// if let Some(interface) = socket.get_interface(3).await? {
     ///     println!("Found interface: {}", interface.interface_index);
@@ -140,9 +140,9 @@ impl AsyncNlSocket {
     /// # Examples
     ///
     /// ```no_run
-    /// # use netlink_wi::asynchronous::AsyncNlSocket;
+    /// # use netlink_wi::AsyncNlSocket;
     /// # use netlink_wi::interface::InterfaceType;
-    /// # async fn example() -> netlink_wi::error::Result<()> {
+    /// # async fn example() -> netlink_wi::NlResult<()> {
     /// let socket = AsyncNlSocket::connect().await?;
     /// socket.set_interface(3, InterfaceType::Monitor).await?;
     /// # Ok(())
@@ -164,9 +164,8 @@ impl AsyncNlSocket {
     /// # Examples
     ///
     /// ```no_run
-    /// # use netlink_wi::asynchronous::AsyncNlSocket;
-    /// # use netlink_wi::attributes::MonitorFlags;
-    /// # async fn example() -> netlink_wi::error::Result<()> {
+    /// # use netlink_wi::{AsyncNlSocket, MonitorFlags};
+    /// # async fn example() -> netlink_wi::NlResult<()> {
     /// let socket = AsyncNlSocket::connect().await?;
     /// let flags = vec![MonitorFlags::FcsFail, MonitorFlags::Control];
     /// socket.set_monitor_flags(3, flags).await?;
@@ -188,17 +187,15 @@ impl AsyncNlSocket {
     /// # Examples
     ///
     /// ```no_run
-    /// # use netlink_wi::asynchronous::AsyncNlSocket;
-    /// # use netlink_wi::netlink::ChannelConfig;
-    /// # async fn example() -> netlink_wi::error::Result<()> {
+    /// # use netlink_wi::{AsyncNlSocket, ChannelConfig};
+    /// # use netlink_wi::interface::ChannelWidth;
+    /// # async fn example() -> netlink_wi::NlResult<()> {
     /// let socket = AsyncNlSocket::connect().await?;
-    /// let config = ChannelConfig {
-    ///     interface_index: 3,
-    ///     frequency: 2437, // Channel 6
-    ///     channel_width: 20,
-    ///     center_frequency1: 2437,
-    ///     center_frequency2: None,
-    /// };
+    /// let config = ChannelConfig::new(
+    ///     3, // interface index
+    ///     2437, // Channel 6
+    ///     ChannelWidth::Width20,
+    /// );
     /// socket.set_channel(config).await?;
     /// # Ok(())
     /// # }
@@ -221,12 +218,12 @@ impl AsyncNlSocket {
     /// # Examples
     ///
     /// ```no_run
-    /// # use netlink_wi::asynchronous::AsyncNlSocket;
-    /// # async fn example() -> netlink_wi::error::Result<()> {
+    /// # use netlink_wi::AsyncNlSocket;
+    /// # async fn example() -> netlink_wi::NlResult<()> {
     /// let socket = AsyncNlSocket::connect().await?;
     /// let stations = socket.list_stations(3).await?;
     /// for station in stations {
-    ///     println!("Station MAC: {:?}", station.mac_address);
+    ///     println!("Station MAC: {:?}", station.mac);
     /// }
     /// # Ok(())
     /// # }
@@ -252,8 +249,8 @@ impl AsyncNlSocket {
     /// # Examples
     ///
     /// ```no_run
-    /// # use netlink_wi::asynchronous::AsyncNlSocket;
-    /// # async fn example() -> netlink_wi::error::Result<()> {
+    /// # use netlink_wi::AsyncNlSocket;
+    /// # async fn example() -> netlink_wi::NlResult<()> {
     /// let socket = AsyncNlSocket::connect().await?;
     /// let devices = socket.list_physical_devices().await?;
     /// for device in devices {
@@ -289,8 +286,8 @@ impl AsyncNlSocket {
     /// # Examples
     ///
     /// ```no_run
-    /// # use netlink_wi::asynchronous::AsyncNlSocket;
-    /// # async fn example() -> netlink_wi::error::Result<()> {
+    /// # use netlink_wi::AsyncNlSocket;
+    /// # async fn example() -> netlink_wi::NlResult<()> {
     /// let socket = AsyncNlSocket::connect().await?;
     /// if let Some(device) = socket.get_physical_device(0).await? {
     ///     println!("PHY: {}", device.wiphy_index);
@@ -325,8 +322,8 @@ impl AsyncNlSocket {
     /// # Examples
     ///
     /// ```no_run
-    /// # use netlink_wi::asynchronous::AsyncNlSocket;
-    /// # async fn example() -> netlink_wi::error::Result<()> {
+    /// # use netlink_wi::AsyncNlSocket;
+    /// # async fn example() -> netlink_wi::NlResult<()> {
     /// let socket = AsyncNlSocket::connect().await?;
     /// let domains = socket.get_regulatory_domain().await?;
     /// for domain in domains {
@@ -357,8 +354,8 @@ impl AsyncNlSocket {
     /// # Examples
     ///
     /// ```no_run
-    /// # use netlink_wi::asynchronous::AsyncNlSocket;
-    /// # async fn example() -> netlink_wi::error::Result<()> {
+    /// # use netlink_wi::AsyncNlSocket;
+    /// # async fn example() -> netlink_wi::NlResult<()> {
     /// let socket = AsyncNlSocket::connect().await?;
     /// socket.trigger_scan(3).await?;
     /// # Ok(())
@@ -383,8 +380,8 @@ impl AsyncNlSocket {
     /// # Examples
     ///
     /// ```no_run
-    /// # use netlink_wi::asynchronous::AsyncNlSocket;
-    /// # async fn example() -> netlink_wi::error::Result<()> {
+    /// # use netlink_wi::AsyncNlSocket;
+    /// # async fn example() -> netlink_wi::NlResult<()> {
     /// let socket = AsyncNlSocket::connect().await?;
     /// socket.trigger_scan(3).await?;
     /// // some time later

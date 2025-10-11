@@ -1,3 +1,29 @@
+//! Wireless regulatory domain information and rules.
+//!
+//! This module provides types for working with wireless regulatory domains, which define
+//! the legal operating parameters for wireless devices in different regions and countries.
+//! Regulatory domains specify allowed frequencies, power limits, DFS requirements, and
+//! other restrictions based on local regulations.
+//!
+//! # Examples
+//!
+//! ```no_run
+//! # use netlink_wi::NlSocket;
+//! # fn example() -> netlink_wi::NlResult<()> {
+//! let socket = NlSocket::connect()?;
+//! let domains = socket.get_regulatory_domain()?;
+//!
+//! for domain in domains {
+//!     println!("Country: {}", domain.country_code);
+//!     println!("DFS Region: {:?}", domain.dfs_region);
+//!     if domain.self_managed {
+//!         println!("Device is self-managing regulatory information");
+//!     }
+//! }
+//! # Ok(())
+//! # }
+//! ```
+
 use log::debug;
 use neli::attr::Attribute as NeliAttribute;
 use neli::err::DeError;

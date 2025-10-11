@@ -30,8 +30,8 @@ use super::interface::WirelessInterface;
 /// # Examples
 ///
 /// ```no_run
-/// # use netlink_wi::synchronous::NlSocket;
-/// # fn example() -> netlink_wi::error::Result<()> {
+/// # use netlink_wi::NlSocket;
+/// # fn example() -> netlink_wi::NlResult<()> {
 /// let socket = NlSocket::connect()?;
 /// let interfaces = socket.list_interfaces()?;
 /// # Ok(())
@@ -54,8 +54,8 @@ impl NlSocket {
     /// # Examples
     ///
     /// ```no_run
-    /// # use netlink_wi::synchronous::NlSocket;
-    /// # fn example() -> netlink_wi::error::Result<()> {
+    /// # use netlink_wi::NlSocket;
+    /// # fn example() -> netlink_wi::NlResult<()> {
     /// let socket = NlSocket::connect()?;
     /// # Ok(())
     /// # }
@@ -71,8 +71,8 @@ impl NlSocket {
     /// # Examples
     ///
     /// ```no_run
-    /// # use netlink_wi::synchronous::NlSocket;
-    /// # fn example() -> netlink_wi::error::Result<()> {
+    /// # use netlink_wi::NlSocket;
+    /// # fn example() -> netlink_wi::NlResult<()> {
     /// let socket = NlSocket::connect()?;
     /// let interfaces = socket.list_interfaces()?;
     /// for interface in interfaces {
@@ -102,8 +102,8 @@ impl NlSocket {
     /// # Examples
     ///
     /// ```no_run
-    /// # use netlink_wi::synchronous::NlSocket;
-    /// # fn example() -> netlink_wi::error::Result<()> {
+    /// # use netlink_wi::NlSocket;
+    /// # fn example() -> netlink_wi::NlResult<()> {
     /// let socket = NlSocket::connect()?;
     /// if let Some(interface) = socket.get_interface(3)? {
     ///     println!("Found interface: {}", interface.interface_index);
@@ -139,9 +139,9 @@ impl NlSocket {
     /// # Examples
     ///
     /// ```no_run
-    /// # use netlink_wi::synchronous::NlSocket;
+    /// # use netlink_wi::NlSocket;
     /// # use netlink_wi::interface::InterfaceType;
-    /// # fn example() -> netlink_wi::error::Result<()> {
+    /// # fn example() -> netlink_wi::NlResult<()> {
     /// let socket = NlSocket::connect()?;
     /// socket.set_interface(3, InterfaceType::Monitor)?;
     /// # Ok(())
@@ -163,9 +163,8 @@ impl NlSocket {
     /// # Examples
     ///
     /// ```no_run
-    /// # use netlink_wi::synchronous::NlSocket;
-    /// # use netlink_wi::attributes::MonitorFlags;
-    /// # fn example() -> netlink_wi::error::Result<()> {
+    /// # use netlink_wi::{NlSocket, MonitorFlags};
+    /// # fn example() -> netlink_wi::NlResult<()> {
     /// let socket = NlSocket::connect()?;
     /// let flags = vec![MonitorFlags::FcsFail, MonitorFlags::Control];
     /// socket.set_monitor_flags(3, flags)?;
@@ -187,17 +186,15 @@ impl NlSocket {
     /// # Examples
     ///
     /// ```no_run
-    /// # use netlink_wi::synchronous::NlSocket;
-    /// # use netlink_wi::netlink::ChannelConfig;
-    /// # fn example() -> netlink_wi::error::Result<()> {
+    /// # use netlink_wi::{NlSocket, ChannelConfig};
+    /// # use netlink_wi::interface::ChannelWidth;
+    /// # fn example() -> netlink_wi::NlResult<()> {
     /// let socket = NlSocket::connect()?;
-    /// let config = ChannelConfig {
-    ///     interface_index: 3,
-    ///     frequency: 2437, // Channel 6
-    ///     channel_width: 20,
-    ///     center_frequency1: 2437,
-    ///     center_frequency2: None,
-    /// };
+    /// let config = ChannelConfig::new(
+    ///     3, // interface index
+    ///     2437, // Channel 6
+    ///     ChannelWidth::Width20,
+    /// );
     /// socket.set_channel(config)?;
     /// # Ok(())
     /// # }
@@ -220,12 +217,12 @@ impl NlSocket {
     /// # Examples
     ///
     /// ```no_run
-    /// # use netlink_wi::synchronous::NlSocket;
-    /// # fn example() -> netlink_wi::error::Result<()> {
+    /// # use netlink_wi::NlSocket;
+    /// # fn example() -> netlink_wi::NlResult<()> {
     /// let socket = NlSocket::connect()?;
     /// let stations = socket.list_stations(3)?;
     /// for station in stations {
-    ///     println!("Station MAC: {:?}", station.mac_address);
+    ///     println!("Station MAC: {:?}", station.mac);
     /// }
     /// # Ok(())
     /// # }
@@ -250,8 +247,8 @@ impl NlSocket {
     /// # Examples
     ///
     /// ```no_run
-    /// # use netlink_wi::synchronous::NlSocket;
-    /// # fn example() -> netlink_wi::error::Result<()> {
+    /// # use netlink_wi::NlSocket;
+    /// # fn example() -> netlink_wi::NlResult<()> {
     /// let socket = NlSocket::connect()?;
     /// let devices = socket.list_physical_devices()?;
     /// for device in devices {
@@ -286,8 +283,8 @@ impl NlSocket {
     /// # Examples
     ///
     /// ```no_run
-    /// # use netlink_wi::synchronous::NlSocket;
-    /// # fn example() -> netlink_wi::error::Result<()> {
+    /// # use netlink_wi::NlSocket;
+    /// # fn example() -> netlink_wi::NlResult<()> {
     /// let socket = NlSocket::connect()?;
     /// if let Some(device) = socket.get_physical_device(0)? {
     ///     println!("PHY: {}", device.wiphy_index);
@@ -321,8 +318,8 @@ impl NlSocket {
     /// # Examples
     ///
     /// ```no_run
-    /// # use netlink_wi::synchronous::NlSocket;
-    /// # fn example() -> netlink_wi::error::Result<()> {
+    /// # use netlink_wi::NlSocket;
+    /// # fn example() -> netlink_wi::NlResult<()> {
     /// let socket = NlSocket::connect()?;
     /// let domains = socket.get_regulatory_domain()?;
     /// for domain in domains {
@@ -352,8 +349,8 @@ impl NlSocket {
     /// # Examples
     ///
     /// ```no_run
-    /// # use netlink_wi::synchronous::NlSocket;
-    /// # fn example() -> netlink_wi::error::Result<()> {
+    /// # use netlink_wi::NlSocket;
+    /// # fn example() -> netlink_wi::NlResult<()> {
     /// let socket = NlSocket::connect()?;
     /// socket.trigger_scan(3)?;
     /// # Ok(())
@@ -378,8 +375,8 @@ impl NlSocket {
     /// # Examples
     ///
     /// ```no_run
-    /// # use netlink_wi::synchronous::NlSocket;
-    /// # fn example() -> netlink_wi::error::Result<()> {
+    /// # use netlink_wi::NlSocket;
+    /// # fn example() -> netlink_wi::NlResult<()> {
     /// let socket = NlSocket::connect()?;
     /// socket.trigger_scan(3)?;
     /// // some time later
