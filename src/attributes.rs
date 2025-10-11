@@ -915,7 +915,7 @@ impl fmt::Debug for RegRuleFlags {
 /// Monitor mode configuration flags.
 ///
 /// nl80211_mntr_flags enum from:
-/// https://github.com/torvalds/linux/blob/master/include/uapi/linux/nl80211.h
+/// <https://github.com/torvalds/linux/blob/master/include/uapi/linux/nl80211.h>
 #[neli_enum(serialized_type = "u16")]
 pub enum MonitorFlags {
     /// Attribute number 0 is reserved.
