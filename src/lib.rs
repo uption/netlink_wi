@@ -1,7 +1,18 @@
-//! A library to retrieve information about wireless hardware in Linux operating
-//! system using netlink protocol.
+//! **netlink_wi** is a Rust library for interacting with wireless devices on Linux systems through the **nl80211** netlink interface.
+//!
+//! It provides programmatic access to wireless configuration and status information, allowing developers to query and control Wi-Fi interfaces directly from Rust code.
+//!
+//! With **netlink_wi**, you can:
+//!
+//! - Enumerate and inspect wireless network interfaces
+//! - Retrieve hardware capabilities and detailed device specifications
+//! - Access information about connected stations and peers
+//! - Query wireless regulatory domain settings
+//! - Configure wireless interface parameters
 //!
 //! ## Usage
+//!
+//! Synchronous example:
 //!
 //! ```rust,no_run
 //! use netlink_wi::NlSocket;
@@ -9,6 +20,20 @@
 //! fn list_interfaces() {
 //!    let mut socket = NlSocket::connect().unwrap();
 //!    let interfaces = socket.list_interfaces().unwrap();
+//!    for interface in interfaces {
+//!        println!("{:#?}", interface);
+//!    }
+//! }
+//! ```
+//!
+//! Asynchronous example (requires `async` feature):
+//!
+//! ```rust,no_run
+//! use netlink_wi::AsyncNlSocket;
+//!
+//! async fn list_interfaces() {
+//!    let socket = AsyncNlSocket::connect().await.unwrap();
+//!    let interfaces = socket.list_interfaces().await.unwrap();
 //!    for interface in interfaces {
 //!        println!("{:#?}", interface);
 //!    }
