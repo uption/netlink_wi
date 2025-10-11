@@ -275,7 +275,7 @@ pub struct TrafficIdStats {
 }
 
 impl TrafficIdStats {
-    pub(crate) fn new(tid_number: u16) -> Self {
+    pub fn new(tid_number: u16) -> Self {
         Self {
             tid_number,
             ..Default::default()

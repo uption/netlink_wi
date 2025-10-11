@@ -24,7 +24,7 @@ pub struct NlError {
 }
 
 impl NlError {
-    pub(crate) fn new<T: Display>(msg: T) -> NlError {
+    pub fn new<T: Display>(msg: T) -> NlError {
         NlError {
             msg: msg.to_string(),
         }
