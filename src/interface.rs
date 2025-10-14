@@ -462,3 +462,19 @@ impl fmt::Display for ChannelWidth {
         write!(f, "{channel_width}")
     }
 }
+
+#[cfg(test)]
+mod tests {
+    use super::*;
+
+    #[test]
+    fn mac_address_from_bytes_and_display() {
+        let mac_bytes = [0x00, 0x11, 0x22, 0xAA, 0xBB, 0xCC];
+        let mut cursor = std::io::Cursor::new(mac_bytes);
+
+        let mac = MacAddress::from_bytes(&mut cursor).expect("mac bytes deserialize");
+
+        assert_eq!(mac.as_bytes(), mac_bytes);
+        assert_eq!(mac.to_string(), "00:11:22:AA:BB:CC");
+    }
+}
