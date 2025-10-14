@@ -52,6 +52,8 @@ pub struct WirelessInterface {
     pub interface_type: Option<InterfaceType>,
     // TXQ statistics.
     pub txq_statistics: Option<TransmitQueueStats>,
+    /// Supported BSS membership selectors exposed by the supplicant.
+    pub supported_selectors: Option<Vec<u8>>,
 }
 
 impl TryFrom<&Attrs<'_, Attribute>> for WirelessInterface {
@@ -108,6 +110,9 @@ impl TryFrom<&Attrs<'_, Attribute>> for WirelessInterface {
                 }
                 Attribute::TxqStats => {
                     txq_stats_attr = Some(attr.get_attr_handle()?);
+                }
+                Attribute::SupportedSelectors => {
+                    interface.supported_selectors = Some(attr.payload().as_ref().to_vec());
                 }
                 unhandled => {
                     debug!("Unhandled wireless interface attribute 'Attribute::{unhandled:?}'");

@@ -386,6 +386,9 @@ pub(crate) enum Attribute {
     WiphyRadios = 330,
     WiphyInterfaceCombinations = 331,
     VifRadioMask = 332,
+    /// Supported BSS Membership Selectors, array of supported selectors
+    /// as defined by IEEE Std 802.11-2020 9.4.2.3 but without the length
+    /// restriction.
     SupportedSelectors = 333,
     MloReconfRemLinks = 334,
     Epcs = 335,
