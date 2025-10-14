@@ -29,14 +29,21 @@
 //! Asynchronous example using [AsyncNlSocket] (requires `async` feature):
 //!
 //! ```rust,no_run
+//! # // This hidden main allows docs.rs to render the snippet even without the feature.
+//! # #[cfg(not(feature = "async"))]
+//! # fn main() {}
+//! # #[cfg(feature = "async")]
 //! use netlink_wi::AsyncNlSocket;
 //!
-//! async fn list_interfaces() {
-//!    let socket = AsyncNlSocket::connect().await.unwrap();
-//!    let interfaces = socket.list_interfaces().await.unwrap();
-//!    for interface in interfaces {
-//!        println!("{:#?}", interface);
-//!    }
+//! # #[cfg(feature = "async")]
+//! #[tokio::main]
+//! async fn main() {
+//!     let socket = AsyncNlSocket::connect().await.unwrap();
+//!     let interfaces = socket.list_interfaces().await.unwrap();
+//!
+//!     for interface in interfaces {
+//!         println!("{:#?}", interface);
+//!     }
 //! }
 //! ```
 //!
