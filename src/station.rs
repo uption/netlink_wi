@@ -4,6 +4,7 @@
 //! access points), including connection statistics, signal strength, bitrate information,
 //! and traffic identifier (TID) statistics.
 
+use std::convert::TryInto;
 use std::fmt;
 use std::time::Duration;
 
@@ -13,7 +14,7 @@ use neli::err::DeError;
 
 use super::attributes::{
     Attribute, BssParam, HeGuardInterval, HeRuAlloc, RateInfo as NlRateInfo, StationFlagBits,
-    StationInfo, TidStats,
+    StationInfo, TidStats, TxqStats as NlTxqStats,
 };
 use super::interface::{ChannelWidth, MacAddress, TransmitQueueStats};
 use crate::attributes::Attrs;
@@ -264,9 +265,20 @@ impl TryFrom<&Attrs<'_, Attribute>> for WirelessStation {
             if let Some(sub_handle) = tid_stats_attr {
                 let mut all_tid_stats: [TrafficIdStats; 17] = Default::default();
                 for sub_attr in sub_handle.iter() {
+                    let tid_number = *sub_attr.nla_type().nla_type();
+                    if tid_number == 0 {
+                        debug!("Skipping invalid TID stats entry with number 0");
+                        continue;
+                    }
+                    let tid_index = tid_number as usize - 1;
+                    if tid_index >= all_tid_stats.len() {
+                        debug!("Unhandled TID stats index: {tid_number}");
+                        continue;
+                    }
                     let nested_handle = sub_attr.get_attr_handle()?;
+                    let tid_stats = &mut all_tid_stats[tid_index];
+                    tid_stats.tid_number = tid_number;
                     for tid_attr in nested_handle.iter() {
-                        let mut tid_stats = TrafficIdStats::new(*sub_attr.nla_type().nla_type());
                         match tid_attr.nla_type().nla_type() {
                             TidStats::RxMsdu => {
                                 tid_stats.rx_msdu = Some(tid_attr.get_payload_as()?);
@@ -281,12 +293,15 @@ impl TryFrom<&Attrs<'_, Attribute>> for WirelessStation {
                                 tid_stats.tx_msdu_failed = Some(tid_attr.get_payload_as()?);
                             }
                             TidStats::Pad => (), // Attribute used for padding for 64-bit alignment.
-                            TidStats::TxqStats => (), // TODO: Get txq stats.
+                            TidStats::TxqStats => {
+                                let txq_handle: Attrs<'_, NlTxqStats> =
+                                    tid_attr.get_attr_handle()?;
+                                tid_stats.txq_stats = Some(txq_handle.try_into()?);
+                            }
                             unhandled => {
                                 debug!("Unhandled tid stats attribute 'TidStats::{unhandled:?}'")
                             }
                         }
-                        all_tid_stats[*sub_attr.nla_type().nla_type() as usize - 1] = tid_stats;
                     }
                 }
                 station.tid_stats = Some(all_tid_stats);

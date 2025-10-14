@@ -3,7 +3,7 @@
 //! This module defines types for working with wireless network interfaces, including
 //! interface configuration, operating modes, channel settings, and MAC addresses.
 
-use std::convert::TryFrom;
+use std::convert::{TryFrom, TryInto};
 use std::fmt;
 
 use log::debug;
@@ -161,48 +161,7 @@ impl TryFrom<&Attrs<'_, Attribute>> for WirelessInterface {
             }
         }
         if let Some(sub_handle) = txq_stats_attr {
-            let mut txq_statistics = TransmitQueueStats::default();
-            for sub_attr in sub_handle.iter() {
-                match sub_attr.nla_type().nla_type() {
-                    TxqStats::BacklogBytes => {
-                        txq_statistics.backlog_bytes = Some(sub_attr.get_payload_as()?);
-                    }
-                    TxqStats::BacklogPackets => {
-                        txq_statistics.backlog_packets = Some(sub_attr.get_payload_as()?);
-                    }
-                    TxqStats::Flows => {
-                        txq_statistics.flows = Some(sub_attr.get_payload_as()?);
-                    }
-                    TxqStats::Drops => {
-                        txq_statistics.drops = Some(sub_attr.get_payload_as()?);
-                    }
-                    TxqStats::EcnMarks => {
-                        txq_statistics.ecn_marks = Some(sub_attr.get_payload_as()?);
-                    }
-                    TxqStats::Overlimit => {
-                        txq_statistics.overlimit = Some(sub_attr.get_payload_as()?);
-                    }
-                    TxqStats::Overmemory => {
-                        txq_statistics.overmemory = Some(sub_attr.get_payload_as()?);
-                    }
-                    TxqStats::Collisions => {
-                        txq_statistics.collisions = Some(sub_attr.get_payload_as()?);
-                    }
-                    TxqStats::TxBytes => {
-                        txq_statistics.tx_bytes = Some(sub_attr.get_payload_as()?);
-                    }
-                    TxqStats::TxPackets => {
-                        txq_statistics.tx_packets = Some(sub_attr.get_payload_as()?);
-                    }
-                    TxqStats::MaxFlows => {
-                        txq_statistics.max_flows = Some(sub_attr.get_payload_as()?);
-                    }
-                    unhandled => {
-                        debug!("Unhandled txq statistics attribute 'TxqStats::{unhandled:?}'")
-                    }
-                }
-            }
-            interface.txq_statistics = Some(txq_statistics);
+            interface.txq_statistics = Some(sub_handle.try_into()?);
         }
         Ok(interface)
     }
@@ -233,6 +192,55 @@ pub struct TransmitQueueStats {
     pub tx_packets: Option<u32>,
     /// Number of flow buckets for PHY.
     pub max_flows: Option<u32>,
+}
+
+impl TryFrom<Attrs<'_, TxqStats>> for TransmitQueueStats {
+    type Error = DeError;
+
+    fn try_from(handle: Attrs<'_, TxqStats>) -> Result<Self, Self::Error> {
+        let mut stats = TransmitQueueStats::default();
+        for attr in handle.iter() {
+            match attr.nla_type().nla_type() {
+                TxqStats::BacklogBytes => {
+                    stats.backlog_bytes = Some(attr.get_payload_as()?);
+                }
+                TxqStats::BacklogPackets => {
+                    stats.backlog_packets = Some(attr.get_payload_as()?);
+                }
+                TxqStats::Flows => {
+                    stats.flows = Some(attr.get_payload_as()?);
+                }
+                TxqStats::Drops => {
+                    stats.drops = Some(attr.get_payload_as()?);
+                }
+                TxqStats::EcnMarks => {
+                    stats.ecn_marks = Some(attr.get_payload_as()?);
+                }
+                TxqStats::Overlimit => {
+                    stats.overlimit = Some(attr.get_payload_as()?);
+                }
+                TxqStats::Overmemory => {
+                    stats.overmemory = Some(attr.get_payload_as()?);
+                }
+                TxqStats::Collisions => {
+                    stats.collisions = Some(attr.get_payload_as()?);
+                }
+                TxqStats::TxBytes => {
+                    stats.tx_bytes = Some(attr.get_payload_as()?);
+                }
+                TxqStats::TxPackets => {
+                    stats.tx_packets = Some(attr.get_payload_as()?);
+                }
+                TxqStats::MaxFlows => {
+                    stats.max_flows = Some(attr.get_payload_as()?);
+                }
+                unhandled => {
+                    debug!("Unhandled txq statistics attribute 'TxqStats::{unhandled:?}'");
+                }
+            }
+        }
+        Ok(stats)
+    }
 }
 
 #[derive(Debug, Copy, Clone, Default)]
