@@ -5,7 +5,7 @@ authors = [
     "Olli Paakkunainen <olli@paakkunainen.fi>",
     "Adarsh Krishnan <adarshk7@gmail.com>",
 ]
-edition = "2021"
+edition = "2024"
 description = """
 A library to retrieve information about wireless hardware
 in Linux operating system using netlink protocol.
