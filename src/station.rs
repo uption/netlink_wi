@@ -12,7 +12,8 @@ use neli::attr::Attribute as NeliAttribute;
 use neli::err::DeError;
 
 use super::attributes::{
-    Attribute, BssParam, HeGuardInterval, HeRuAlloc, RateInfo as NlRateInfo, StationInfo, TidStats,
+    Attribute, BssParam, HeGuardInterval, HeRuAlloc, RateInfo as NlRateInfo, StationFlagBits,
+    StationInfo, TidStats,
 };
 use super::interface::{ChannelWidth, MacAddress, TransmitQueueStats};
 use crate::attributes::Attrs;
@@ -69,6 +70,8 @@ pub struct WirelessStation {
     pub beacon_rx: Option<u64>,
     /// Per TID (traffic identifier) statistics.
     pub tid_stats: Option<[TrafficIdStats; 17]>,
+    /// Station state flags as reported by the kernel.
+    pub flags: Option<StationFlags>,
     /// Indicates if BSS CTS protection enabled.
     pub bss_cts_protection: Option<bool>,
     /// Indicates if BSS short preamble is enabled.
@@ -173,7 +176,70 @@ impl TryFrom<&Attrs<'_, Attribute>> for WirelessStation {
                     StationInfo::BeaconRx => {
                         station.beacon_rx = Some(sub_attr.get_payload_as()?);
                     }
-                    StationInfo::StaFlags => (), // TODO: Get station flags
+                    StationInfo::StaFlags => {
+                        const STA_FLAG_UPDATE_LEN: usize = 8;
+                        let payload = sub_attr.payload().as_ref();
+                        if payload.len() < STA_FLAG_UPDATE_LEN {
+                            debug!("Station flags payload too short: {} bytes", payload.len());
+                            continue;
+                        }
+                        let mask =
+                            u32::from_ne_bytes([payload[0], payload[1], payload[2], payload[3]]);
+                        let set =
+                            u32::from_ne_bytes([payload[4], payload[5], payload[6], payload[7]]);
+                        let mask_bits_raw = StationFlagBits::from_bits_truncate(mask).bits();
+                        let set_bits_raw = StationFlagBits::from_bits_truncate(set).bits();
+                        let unknown_mask = mask & !mask_bits_raw;
+                        if unknown_mask != 0 {
+                            debug!("Unhandled station flag mask bits: 0x{unknown_mask:08x}");
+                        }
+                        let unknown_set = set & !set_bits_raw;
+                        if unknown_set != 0 {
+                            debug!("Unhandled station flag set bits: 0x{unknown_set:08x}");
+                        }
+                        let mut flags = StationFlags::default();
+                        flags.authorized = StationFlags::resolve_flag(
+                            mask_bits_raw,
+                            set_bits_raw,
+                            StationFlagBits::AUTHORIZED,
+                        );
+                        flags.short_preamble = StationFlags::resolve_flag(
+                            mask_bits_raw,
+                            set_bits_raw,
+                            StationFlagBits::SHORT_PREAMBLE,
+                        );
+                        flags.wme = StationFlags::resolve_flag(
+                            mask_bits_raw,
+                            set_bits_raw,
+                            StationFlagBits::WME,
+                        );
+                        flags.mfp = StationFlags::resolve_flag(
+                            mask_bits_raw,
+                            set_bits_raw,
+                            StationFlagBits::MFP,
+                        );
+                        flags.authenticated = StationFlags::resolve_flag(
+                            mask_bits_raw,
+                            set_bits_raw,
+                            StationFlagBits::AUTHENTICATED,
+                        );
+                        flags.tdls_peer = StationFlags::resolve_flag(
+                            mask_bits_raw,
+                            set_bits_raw,
+                            StationFlagBits::TDLS_PEER,
+                        );
+                        flags.associated = StationFlags::resolve_flag(
+                            mask_bits_raw,
+                            set_bits_raw,
+                            StationFlagBits::ASSOCIATED,
+                        );
+                        flags.spp_amsdu = StationFlags::resolve_flag(
+                            mask_bits_raw,
+                            set_bits_raw,
+                            StationFlagBits::SPP_AMSDU,
+                        );
+                        station.flags = Some(flags);
+                    }
                     StationInfo::RxBitrate => {
                         let sub_handle = sub_attr.get_attr_handle()?;
                         station.rx_bitrate = Some(sub_handle.try_into()?);
@@ -254,6 +320,40 @@ impl TryFrom<&Attrs<'_, Attribute>> for WirelessStation {
             }
         }
         Ok(station)
+    }
+}
+
+#[derive(Debug, Clone, Default)]
+/// Station flag states returned from nl80211.
+pub struct StationFlags {
+    /// Station is authorized (802.1X).
+    pub authorized: Option<bool>,
+    /// Station is capable of receiving frames with short barker preamble.
+    pub short_preamble: Option<bool>,
+    /// Station is WME/QoS capable.
+    pub wme: Option<bool>,
+    /// Management frame protection is enabled.
+    pub mfp: Option<bool>,
+    /// Station is authenticated with the AP.
+    pub authenticated: Option<bool>,
+    /// Station is a TDLS peer.
+    pub tdls_peer: Option<bool>,
+    /// Station is associated.
+    pub associated: Option<bool>,
+    /// Station reports SPP A-MSDU support.
+    pub spp_amsdu: Option<bool>,
+}
+
+impl StationFlags {
+    fn resolve_flag(mask_bits: u32, set_bits: u32, flag: StationFlagBits) -> Option<bool> {
+        let flag_bits = flag.bits();
+        if mask_bits & flag_bits != 0 {
+            Some(set_bits & flag_bits != 0)
+        } else if set_bits & flag_bits != 0 {
+            Some(true)
+        } else {
+            None
+        }
     }
 }
 

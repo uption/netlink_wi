@@ -568,6 +568,26 @@ pub(crate) enum StationInfo {
 
 impl NlAttrType for StationInfo {}
 
+bitflags! {
+    /// Station flag bits reported by nl80211 (`enum nl80211_sta_flags`).
+    pub struct StationFlagBits: u32 {
+        const AUTHORIZED = 1 << 1;
+        const SHORT_PREAMBLE = 1 << 2;
+        const WME = 1 << 3;
+        const MFP = 1 << 4;
+        const AUTHENTICATED = 1 << 5;
+        const TDLS_PEER = 1 << 6;
+        const ASSOCIATED = 1 << 7;
+        const SPP_AMSDU = 1 << 8;
+    }
+}
+
+impl fmt::Debug for StationFlagBits {
+    fn fmt(&self, f: &mut fmt::Formatter) -> fmt::Result {
+        fmt::Debug::fmt(&self.bits(), f)
+    }
+}
+
 /// Nl80211 bitrate information.
 ///
 /// These attribute types are used with `Attribute.StaInfo.RxBitrate` or
