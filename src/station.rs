@@ -197,47 +197,48 @@ impl TryFrom<&Attrs<'_, Attribute>> for WirelessStation {
                         if unknown_set != 0 {
                             debug!("Unhandled station flag set bits: 0x{unknown_set:08x}");
                         }
-                        let mut flags = StationFlags::default();
-                        flags.authorized = StationFlags::resolve_flag(
-                            mask_bits_raw,
-                            set_bits_raw,
-                            StationFlagBits::AUTHORIZED,
-                        );
-                        flags.short_preamble = StationFlags::resolve_flag(
-                            mask_bits_raw,
-                            set_bits_raw,
-                            StationFlagBits::SHORT_PREAMBLE,
-                        );
-                        flags.wme = StationFlags::resolve_flag(
-                            mask_bits_raw,
-                            set_bits_raw,
-                            StationFlagBits::WME,
-                        );
-                        flags.mfp = StationFlags::resolve_flag(
-                            mask_bits_raw,
-                            set_bits_raw,
-                            StationFlagBits::MFP,
-                        );
-                        flags.authenticated = StationFlags::resolve_flag(
-                            mask_bits_raw,
-                            set_bits_raw,
-                            StationFlagBits::AUTHENTICATED,
-                        );
-                        flags.tdls_peer = StationFlags::resolve_flag(
-                            mask_bits_raw,
-                            set_bits_raw,
-                            StationFlagBits::TDLS_PEER,
-                        );
-                        flags.associated = StationFlags::resolve_flag(
-                            mask_bits_raw,
-                            set_bits_raw,
-                            StationFlagBits::ASSOCIATED,
-                        );
-                        flags.spp_amsdu = StationFlags::resolve_flag(
-                            mask_bits_raw,
-                            set_bits_raw,
-                            StationFlagBits::SPP_AMSDU,
-                        );
+                        let flags = StationFlags {
+                            authorized: StationFlags::resolve_flag(
+                                mask_bits_raw,
+                                set_bits_raw,
+                                StationFlagBits::AUTHORIZED,
+                            ),
+                            short_preamble: StationFlags::resolve_flag(
+                                mask_bits_raw,
+                                set_bits_raw,
+                                StationFlagBits::SHORT_PREAMBLE,
+                            ),
+                            wme: StationFlags::resolve_flag(
+                                mask_bits_raw,
+                                set_bits_raw,
+                                StationFlagBits::WME,
+                            ),
+                            mfp: StationFlags::resolve_flag(
+                                mask_bits_raw,
+                                set_bits_raw,
+                                StationFlagBits::MFP,
+                            ),
+                            authenticated: StationFlags::resolve_flag(
+                                mask_bits_raw,
+                                set_bits_raw,
+                                StationFlagBits::AUTHENTICATED,
+                            ),
+                            tdls_peer: StationFlags::resolve_flag(
+                                mask_bits_raw,
+                                set_bits_raw,
+                                StationFlagBits::TDLS_PEER,
+                            ),
+                            associated: StationFlags::resolve_flag(
+                                mask_bits_raw,
+                                set_bits_raw,
+                                StationFlagBits::ASSOCIATED,
+                            ),
+                            spp_amsdu: StationFlags::resolve_flag(
+                                mask_bits_raw,
+                                set_bits_raw,
+                                StationFlagBits::SPP_AMSDU,
+                            ),
+                        };
                         station.flags = Some(flags);
                     }
                     StationInfo::RxBitrate => {
