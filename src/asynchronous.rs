@@ -3,13 +3,13 @@ use std::fmt::Write;
 use std::io::Cursor;
 
 use log::debug;
+use neli::ToBytes;
 use neli::consts::nl::Nlmsg;
 use neli::consts::socket::NlFamily;
 use neli::err::RouterError;
 use neli::nl::NlPayload;
 use neli::router::asynchronous::{NlRouter, NlRouterReceiverHandle};
 use neli::utils::Groups;
-use neli::ToBytes;
 
 use crate::attributes::{Attribute, Attrs, MonitorFlags};
 use crate::error::Result;

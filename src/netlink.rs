@@ -3,10 +3,10 @@ use neli::genl::{AttrTypeBuilder, Genlmsghdr, GenlmsghdrBuilder, NlattrBuilder, 
 use neli::nl::NlPayload;
 use neli::types::GenlBuffer;
 
+use crate::MonitorFlags;
 use crate::attributes::Attribute;
 use crate::commands::Command;
 use crate::interface::{ChannelWidth, InterfaceType};
-use crate::MonitorFlags;
 
 use super::attributes::ChannelWidth as NlChannelWidth;
 use super::attributes::InterfaceType as NlInterfaceType;

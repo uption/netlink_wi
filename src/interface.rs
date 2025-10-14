@@ -7,9 +7,9 @@ use std::convert::{TryFrom, TryInto};
 use std::fmt;
 
 use log::debug;
+use neli::FromBytes;
 use neli::attr::Attribute as NeliAttribute;
 use neli::err::DeError;
-use neli::FromBytes;
 
 use super::attributes::ChannelWidth as NlChannelWidth;
 use super::attributes::InterfaceType as NlInterfaceType;

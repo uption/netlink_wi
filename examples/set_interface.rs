@@ -1,5 +1,5 @@
 use log::LevelFilter;
-use netlink_wi::{interface::InterfaceType, NlSocket};
+use netlink_wi::{NlSocket, interface::InterfaceType};
 use simple_logger::SimpleLogger;
 
 fn main() {
