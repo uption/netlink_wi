@@ -255,6 +255,39 @@ pub(crate) enum Command {
     UnprotBeacon = 138,
 
     ControlPortFrameTxStatus = 139,
+
+    SetSarSpecs = 140,
+
+    ObssColorCollision = 141,
+
+    ColorChangeRequest = 142,
+
+    ColorChangeStarted = 143,
+    ColorChangeAborted = 144,
+    ColorChangeCompleted = 145,
+
+    SetFilsAad = 146,
+
+    AssocComeback = 147,
+
+    AddLink = 148,
+    RemoveLink = 149,
+
+    AddLinkSta = 150,
+    ModifyLinkSta = 151,
+    RemoveLinkSta = 152,
+
+    SetHwTimestamp = 153,
+
+    LinksRemoved = 154,
+
+    SetTidToLinkMapping = 155,
+
+    AssocMloReconf = 156,
+    EpcsCfg = 157,
+
+    NanNextDwNotification = 158,
+    NanClusterJoined = 159,
 }
 
 impl Cmd for Command {}
