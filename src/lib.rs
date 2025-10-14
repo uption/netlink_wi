@@ -12,7 +12,7 @@
 //!
 //! ## Usage
 //!
-//! Synchronous example:
+//! Synchronous example using [NlSocket]:
 //!
 //! ```rust,no_run
 //! use netlink_wi::NlSocket;
@@ -26,7 +26,7 @@
 //! }
 //! ```
 //!
-//! Asynchronous example (requires `async` feature):
+//! Asynchronous example using [AsyncNlSocket] (requires `async` feature):
 //!
 //! ```rust,no_run
 //! use netlink_wi::AsyncNlSocket;
